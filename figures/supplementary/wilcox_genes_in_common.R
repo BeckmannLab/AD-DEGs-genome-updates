@@ -95,10 +95,10 @@ g <- ggplot(all2, aes(x = factor(assembly, levels = unique(assembly)), fill = Si
   ) +
   theme_bw(base_size = 16) +
   theme(
-    axis.text.x = element_text(angle = 45, hjust = 1, size = 14),
-    axis.text.y = element_text(size = 14),
-    axis.title.x = element_text(size = 16),
-    axis.title.y = element_text(size = 16),
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
+    axis.text.y = element_text(size = 18),
+    axis.title.x = element_text(size = 20),
+    axis.title.y = element_text(size = 20),
     legend.text = element_text(size = 14),
     legend.title = element_text(size = 16),
     legend.position = c(0.05, 0.95),       # Top left corner
