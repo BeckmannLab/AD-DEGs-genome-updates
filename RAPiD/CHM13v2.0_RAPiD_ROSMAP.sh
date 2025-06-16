@@ -1,0 +1,87 @@
+#!/bin/bash
+
+genome="T2TCHM13v2.0"
+assembly="GCA_009914755.4"
+
+batch_size=100
+
+########################################
+# Create run directories and link paired FASTQs
+########################################
+mkdir -p "$run_dir"
+
+while read -r NAME; do
+  sample_dir="${run_dir}/${NAME}"
+  mkdir -p "$sample_dir"
+  ln -sf "${fastq_dir}/${NAME}.sorted1.fastq.gz" "${sample_dir}/${NAME}_R1_001.fastq.gz"
+  ln -sf "${fastq_dir}/${NAME}.sorted2.fastq.gz" "${sample_dir}/${NAME}_R2_001.fastq.gz"
+done < "$ids_file"
+
+########################################
+# Create batches and RAPiD scripts
+########################################
+cd "$run_dir"
+sample_dirs=($(ls -d */ | grep -v "batch"))
+numbatches=$(( (${#sample_dirs[@]} + batch_size - 1) / batch_size ))
+
+for batchID in $(seq 0 $((numbatches - 1))); do
+  batch_name="batch${batchID}"
+  batch_path="${run_dir}/${batch_name}"
+  mkdir -p "$batch_path"
+
+  start=$((batchID * batch_size))
+  batch_samples=("${sample_dirs[@]:$start:$batch_size}")
+  cp -r "${batch_samples[@]}" "$batch_path"
+  rm -rf "$batch_path"/*/RAPiD/
+
+  script_name="rapid_run_${genome}_batch${batchID}.sh"
+  cat <<EOF > "$script_name"
+#!/bin/bash
+
+scratch_rapid1="${scratch_dir}"
+mkdir -p "\$scratch_rapid1"
+run_folder1="${batch_path}"
+script_rapid="${script_path}"
+
+cd "\$scratch_rapid1"
+module purge
+module load java R
+
+${nextflow_bin} run "\$script_rapid" \\
+  --run "\$run_folder1" \\
+  --pairedEnd --stranded reverse \\
+  -profile PolyA \\
+  --genome "${assembly}" \\
+  --twopass1readsN 18446744073709551615 \\
+  --twopassMode Basic \\
+  --rawPath . \\
+  --outPath RAPiD \\
+  --fastqc --featureCounts --qc -resume
+EOF
+done
+
+########################################
+# Manual batch submission (example)
+########################################
+# bash rapid_run_T2TCHM13v2.0_batch0.sh
+# bash rapid_run_T2TCHM13v2.0_batch1.sh
+# ...
+
+########################################
+# Copy logs and results from scratch
+########################################
+batchID=6  # Set as needed
+dest_dir="${run_dir}/batch${batchID}"
+
+cp "${scratch_dir}/pipeline_trace.txt"* "$dest_dir"
+cp "${scratch_dir}"/*std* "$dest_dir"
+cp "${scratch_dir}/report.html" "$dest_dir"
+
+########################################
+# Clean up scratch space
+########################################
+rm -rf "${scratch_dir:?}"/*
+cd "$run_dir"
+
+# Optional: remove genome directory after completion
+# rm -rf "${base_dir}/rapid_run/${genome}"
