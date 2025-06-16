@@ -1,0 +1,210 @@
+# Clean environment and load libraries
+rm(list = ls())
+library(data.table)
+library(limma)
+library(edgeR)
+library(variancePartition)
+library(ggplot2)
+library(BiocParallel)
+library(assertthat)
+library(tidyverse)
+library(dplyr)
+library(foreach)
+library(doParallel)
+
+# Utility functions
+MyBatchtoolsLSFParam <- function(..., registryargs = batchtoolsRegistryargs()) {
+  registryargs$conf.file <- path_conf_file
+  bt_conf <- within(list(), { source(path_conf_file, local = TRUE) })
+  param <- BatchtoolsParam(cluster = "lsf", registryargs = registryargs, ...)
+  if (!is.null(bt_conf$default.resources)) {
+    merged_resources <- bt_conf$default.resources
+    merged_resources[names(param$resources)] <- param$resources
+    param$resources <- merged_resources
+  }
+  bpstart(param)
+  if (!is.null(bt_conf$cluster.functions)) {
+    param$registry$cluster.functions <- bt_conf$cluster.functions
+  }
+  param
+}
+
+# Strip version suffix from gene IDs
+strip_version <- function(ids) {
+  vapply(ids, function(id) {
+    parts <- strsplit(id, '.', fixed = TRUE)[[1]]
+    if (length(parts) == 1) return(parts[1])
+    suffix <- parts[2]
+    subparts <- strsplit(suffix, '_', fixed = TRUE)[[1]]
+    if (length(subparts) < 3) return(parts[1])
+    paste(parts[1], paste(subparts[2:3], collapse = '_'), sep = '_')
+  }, character(1))
+}
+
+# Append decimal counters to duplicated IDs
+add_decimal_numbers <- function(target_values, value_list) {
+  idx <- match(value_list, target_values)
+  ifelse(!is.na(idx),
+         paste0(value_list, '.', ave(seq_along(value_list), idx, FUN = seq_along)),
+         value_list)
+}
+
+# Peek into objects
+peek <- function(x, n = 6) {
+  if (is.null(dim(x)) && !is.null(length(x))) {
+    head(x, n)
+  } else if (length(dim(x)) == 2) {
+    x[1:min(n, nrow(x)), 1:min(n, ncol(x)), drop = FALSE]
+  } else {
+    stop("Unsupported object class ", class(x)[1])
+  }
+}
+
+# Duplicate rows based on count_dataset
+duplicate_rows_based_on_count <- function(dataset, coldup, count_dataset) {
+  overlap <- intersect(dataset[[coldup]], count_dataset[[coldup]])
+  counts  <- table(count_dataset[[coldup]][count_dataset[[coldup]] %in% overlap])
+  single  <- dataset[dataset[[coldup]] %in% names(counts[counts == 1]), ]
+  non     <- dataset[!dataset[[coldup]] %in% names(counts), ]
+  multi   <- dataset[dataset[[coldup]] %in% names(counts[counts > 1]), ]
+  dup_list <- lapply(names(counts[counts > 1]]), function(val) {
+    df0 <- multi[multi[[coldup]] == val, ]
+    occ <- counts[val]
+    df_rep <- df0[rep(seq_len(nrow(df0)), each = occ), ]
+    df_rep[[coldup]] <- paste0(val, '.', rep(seq_len(occ), times = nrow(df0)))
+    rownames(df_rep) <- df_rep[[coldup]]
+    df_rep
+  })
+  do.call(rbind, c(list(single), dup_list, list(non)))
+}
+
+# Load expression matrix for a given genome build
+load_expression_data <- function(genome, date_txt = date_default) {
+  subdir <- paste0("Rosmap", genome)
+  fname  <- paste0("allcount_matrix_", date_txt, ".txt")
+  data_file <- file.path(path_prefix, subdir, "expression", fname)
+  dt <- fread(data_file, data.table = FALSE)
+  rownames(dt) <- dt$Geneid
+  dt$Geneid <- NULL
+  dt
+}
+
+# Load sample metadata and IDs to keep
+info_all_base <- readRDS(file.path(path_Rosmap, "covariates", "info_all.RDS"))
+ids_to_keep    <- readRDS(file.path(path_Rosmap, "expression", "voom_normalized_counts_allRin_allpmi_nomislabelled.RDS"))
+info_all_base <- info_all_base[match(colnames(ids_to_keep), make.names(info_all_base$sample)), ]
+info_all_base <- info_all_base[order(info_all_base$sample), ]
+info_all_base$original_sample <- info_all_base$sample
+ids_to_keep <- info_all_base$sample
+saveRDS(ids_to_keep, file.path(path_metadata, "ids_to_keep.RDS"))
+saveRDS(info_all_base, file.path(path_metadata, "infoall_09.13.23.RDS"))
+
+# Load expression datasets into global env
+genome_keys <- c("HG18", "HG19", "v30", "v43", "T2T")
+expressions <- setNames(lapply(genome_keys, function(g) {
+  if (g == "T2T") load_expression_data(g, date_t2t)
+  else load_expression_data(g)
+}), paste0("genedata_org_", genome_keys))
+for (nm in names(expressions)) assign(nm, expressions[[nm]], envir = .GlobalEnv)
+
+# Load map and variable table
+map     <- fread(file.path(path_references, "T2TCHM13v2.0", "GCA_009914755.4", "map_genename_T2T_ensembl_from_gtf.txt"))
+all_var <- read.delim(file.path(path_msbb, "all_var.txt"), sep = "\t", header = FALSE)
+
+# Register parallel backend
+registerDoParallel(cores = nrow(all_var))
+
+# Function to process each iteration
+process_iteration <- function(row) {
+  old_var      <- row[[1]]
+  old_ver      <- row[[2]]
+  new_assign   <- row[[3]]
+  new_var      <- row[[4]]
+  new_ver      <- row[[5]]
+  new_assign2  <- row[[6]]
+  merged_name  <- row[[7]]
+  combo_subdir <- row[[8]]
+  covar_name   <- row[[9]]
+
+  # expression RDS filepath
+  combo_dir <- file.path(path_combos, combo_subdir)
+  expr_file <- file.path(combo_dir, "expression", sprintf("allcount_matrix_%s_%s.RDS", combo_subdir, date_default))
+
+  if (!file.exists(expr_file)) {
+    # New build
+    dat_new <- get(new_var)
+    df_new  <- dat_new[, intersect(colnames(dat_new), make.names(ids_to_keep)), drop = FALSE]
+    colnames(df_new) <- paste0(colnames(df_new), ".", new_ver)
+    df_new <- as.data.table(df_new, keep.rownames = TRUE)
+    assign(new_assign2, df_new, envir = .GlobalEnv)
+
+    # Old build
+    dat_old <- get(old_var)
+    rownames(dat_old) <- strip_version(rownames(dat_old))
+    df_old <- dat_old[, intersect(colnames(dat_old), make.names(ids_to_keep)), drop = FALSE]
+    colnames(df_old) <- paste0(colnames(df_old), ".", old_ver)
+    df_old <- as.data.table(df_old, keep.rownames = TRUE)
+    assign(new_assign, df_old, envir = .GlobalEnv)
+
+    # Merge and save
+    merged <- merge(get(new_assign), get(new_assign2), by = "rn", all = TRUE)
+    merged[is.na(merged)] <- 0
+    rownames(merged) <- merged$rn
+    merged$rn <- NULL
+    assign(merged_name, merged, envir = .GlobalEnv)
+    saveRDS(merged, file.path(combo_dir, "expression", sprintf("allcount_matrix_%s_%s.RDS", combo_subdir, date_default)))
+  } else {
+    merged <- readRDS(expr_file)
+    assign(merged_name, merged, envir = .GlobalEnv)
+  }
+
+  # Build covariate table
+  info1 <- info_all_base
+  info2 <- info_all_base
+  info1$sample   <- paste0(info1$sample, ".", old_ver)
+  info2$sample   <- paste0(info2$sample, ".", new_ver)
+  info1$assembly <- old_ver
+  info2$assembly <- new_ver
+  covar <- rbind(info1, info2)
+  assign(covar_name, covar, envir = .GlobalEnv)
+  saveRDS(covar, file.path(combo_dir, "covariate", sprintf("info_all_%s_%s.RDS", combo_subdir, date_default)))
+
+  # Differential expression with voom + dream
+  expr_mat <- get(merged_name)
+  isexpr <- rowSums(cpm(expr_mat) >= 1) >= 0.1 * ncol(expr_mat)
+  dge     <- DGEList(counts = expr_mat[isexpr, ])
+  dge     <- calcNormFactors(dge)
+
+  covar2 <- covar
+  covar2$id       <- covar2$original_sample
+  rownames(covar2) <- make.names(covar2$sample)
+  design <- model.matrix(~ (1 | id), covar2)
+  vobj   <- voom(dge, design, plot = FALSE)
+
+  # Contrast between new and old
+  status <- "assembly"
+  formula_str <- as.formula(paste0("~ 0 + ", status, " + (1|id)"))
+  L <- getContrast(vobj, formula_str, covar2,
+                   c(paste0("assembly", new_ver), paste0("assembly", old_ver)))
+
+  # Fit dream
+  fit_file <- file.path(combo_dir, "DE", new_ver, old_ver, "fitDream.RDS")
+  if (!file.exists(fit_file)) {
+    dir.create(dirname(fit_file), recursive = TRUE, showWarnings = FALSE)
+    fit <- dream(vobj, formula_str, covar2, L,
+                 BPPARAM = MyBatchtoolsLSFParam(workers = 100, resources = list(walltime = 30*60, threads_per_job = 1, memory = "15GB")))
+    saveRDS(fit, fit_file)
+  } else {
+    fit <- readRDS(fit_file)
+  }
+
+  # Top table and save
+  res <- topTable(fit, coef = "L1", number = Inf, sort.by = "P")
+  fwrite(res, file.path(combo_dir, "DE", sprintf("DE_assembly_corrected_for_id_%s_test.txt", status)),
+         sep = "\t", quote = FALSE)
+}
+
+# Run all iterations in parallel
+foreach(i = seq_len(nrow(all_var)), .packages = c("data.table","limma","edgeR","variancePartition","assertthat")) %dopar% {
+  process_iteration(all_var[i, ])
+}
