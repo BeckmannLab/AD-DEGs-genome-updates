@@ -1,14 +1,6 @@
 #!/bin/bash
 
 ##########
-# Copy FASTA and GTF files
-##########
-mkdir -p "$fasta_dir" "$gtf_dir"
-cp /sc/arion/projects/H_PBG/REFERENCES/GRCh38/FASTA/GRCh38.primary_assembly.genome.fa "$fasta_file"
-cp /sc/arion/projects/H_PBG/REFERENCES/GRCh38/Gencode/release_30/gencode.v30.primary_assembly.annotation.gtf "$gtf_file"
-wget -P "$fasta_dir" "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_30/GRCh38.primary_assembly.genome.fa.gz"
-
-##########
 # Generate STAR index
 ##########
 ml star/2.7.3a
@@ -25,7 +17,6 @@ STAR --runThreadN 24 \
 ##########
 # Compare STAR output with reference
 ##########
-ref_star_dir="/sc/arion/projects/mscic1/results/anina/Noam_testing/chr_primary"
 cd "$star_dir"
 for file in *; do
   sum1=$(md5sum "$file" | awk '{print $1}')
@@ -41,7 +32,6 @@ done
 # Convert GTF to GenePred and reflat
 ##########
 cd "$gtf_dir"
-/sc/arion/projects/mscic1/results/anina/gtfToGenePred -genePredExt "$gtf_file" "$genepred_file"
 
 awk '($2 !~ /^H/){print $12, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10}' OFS='\t' \
   "$genepred_file" > "$reflat_file"
