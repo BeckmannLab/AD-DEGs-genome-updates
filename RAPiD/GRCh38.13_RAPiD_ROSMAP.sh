@@ -1,9 +1,5 @@
 #!/bin/bash
 
-########################################
-# Set paths and constants (easy to remove for de-ID)
-########################################
-
 genome="hg38"
 transcriptome="v43"
 assembly="GRCh38.Gencode.v43"
