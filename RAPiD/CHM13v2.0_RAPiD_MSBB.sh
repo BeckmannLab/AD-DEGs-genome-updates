@@ -1,8 +1,5 @@
 #!/bin/bash
 
-########################################
-# Set paths and constants (easy to remove for de-ID)
-########################################
 genome="T2TCHM13v2.0"
 assembly="GCA_009914755.4"
 
