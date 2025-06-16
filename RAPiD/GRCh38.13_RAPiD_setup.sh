@@ -25,7 +25,6 @@ STAR --runThreadN 24 \
 # Create GenePred and reflat
 ##########
 cd "$base_dir"
-/sc/arion/projects/mscic1/results/anina/gtfToGenePred -genePredExt "$gtf_file" "$genepred_file"
 
 awk '{ print $12, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10 }' OFS='\t' \
   "$genepred_file" > "$reflat_file"
