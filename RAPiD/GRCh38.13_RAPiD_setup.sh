@@ -1,26 +1,5 @@
 #!/bin/bash
 
-########################################
-# Setup GRCh38 Gencode v43 Reference
-########################################
-
-##########
-# Define top-level directories and input paths
-##########
-base_dir="/sc/arion/projects/mscic1/results/anina/references/GRCh38/v43"
-fasta_dir="${base_dir}/FASTA"
-gtf_dir="${base_dir}/gencode.v43"
-star_dir="${base_dir}/chr_primary"
-
-fasta_file="${fasta_dir}/GRCh38.primary_assembly.genome.fa"
-gtf_file="${gtf_dir}/gencode.v43.primary_assembly.annotation.gtf"
-genepred_file="${gtf_dir}/gencode.v43.primary_assembly.annotation.GenePred"
-reflat_file="${gtf_dir}/gencode.v43.primary_assembly.annotation.reflat"
-bed_file="${gtf_dir}/gencode.v43.primary_assembly.annotation.bed"
-rrna_bed="${gtf_dir}/gencode.v43.rRNA.bed"
-dict_file="/sc/arion/projects/mscic1/results/anina/Noam_testing/FASTA/GRCh38.primary_assembly.genome.dict"
-globin_gene_list="/sc/arion/projects/H_PBG/REFERENCES/GRCh38/Gencode/release_30/globin_gene"
-
 ##########
 # Download Gencode v43 FASTA and GTF
 ##########
