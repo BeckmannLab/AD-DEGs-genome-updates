@@ -1,3 +1,10 @@
+# ==== Set Working Directories (Edit or Remove Before Publishing) ====
+data_dir <- "/sc/arion/projects/mscic1/results/anina/fun_project_4.23/analysis/"
+output_dir <- "/hpc/users/lunda02/www/plots/assembly_paper/assembly/"
+
+input_rds <- file.path(data_dir, "with_coding_status_all_info_ROSMAP.RDS")
+output_pdf <- file.path(output_dir, "proportion_coding_v_noncoding_DQ_assembly_ROSMAP.pdf")
+
 # ==== Libraries ====
 library(ggplot2)
 
@@ -14,16 +21,16 @@ cbPalette <- c("#F5793A", "#A95AA1", "#85C0F9", "#0F2080", "#999999")
 
 # Reformat assembly labels
 assembly_map <- c(
-  "GRCh37-NCBI36" = "GRCh37/NCBI36",
-  "GRCh38.12-NCBI36" = "GRCh38.p12/NCBI36",
-  "GRCh38.13-NCBI36" = "GRCh38.p13/NCBI36",
-  "CHM13v2.0-NCBI36" = "T2T-CHM13v2.0/NCBI36",
-  "GRCh38.12-GRCh37" = "GRCh38.p12/GRCh37",
-  "GRCh38.13-GRCh37" = "GRCh38.p13/GRCh37",
-  "CHM13v2.0-GRCh37" = "T2T-CHM13v2.0/GRCh37",
-  "GRCh38.13-GRCh38.12" = "GRCh38.p13/GRCh38.p12",
-  "CHM13v2.0-GRCh38.12" = "T2T-CHM13v2.0/GRCh38.p12",
-  "CHM13v2.0-GRCh38.13" = "T2T-CHM13v2.0/GRCh38.p13"
+  "GRCh37-NCBI36"           = "GRCh37/NCBI36",
+  "GRCh38.12-NCBI36"        = "GRCh38.p12/NCBI36",
+  "GRCh38.13-NCBI36"        = "GRCh38.p13/NCBI36",
+  "CHM13v2.0-NCBI36"        = "T2T-CHM13v2.0/NCBI36",
+  "GRCh38.12-GRCh37"        = "GRCh38.p12/GRCh37",
+  "GRCh38.13-GRCh37"        = "GRCh38.p13/GRCh37",
+  "CHM13v2.0-GRCh37"        = "T2T-CHM13v2.0/GRCh37",
+  "GRCh38.13-GRCh38.12"     = "GRCh38.p13/GRCh38.p12",
+  "CHM13v2.0-GRCh38.12"     = "T2T-CHM13v2.0/GRCh38.p12",
+  "CHM13v2.0-GRCh38.13"     = "T2T-CHM13v2.0/GRCh38.p13"
 )
 
 all_info_ROSMAP$assembly <- factor(
@@ -39,35 +46,35 @@ g <- ggplot(all_info_ROSMAP, aes(x = assembly, fill = for_plot)) +
     labeller = labeller(status = c(non_coding = "Non-Coding", protein_coding = "Protein-Coding"))
   ) +
   theme_minimal() +
-  xlab("Assembly") +
+  xlab("Reference Comparison") +
   ylab("Genes Expressed") +
   scale_fill_manual(
     values = cbPalette,
     labels = c(
       "common genes LogFC > 0",
       "unique genes LogFC > 0",
-      "common genes LogFC ≤ 0",
-      "unique genes LogFC ≤ 0",
+      "common genes LogFC < 0",
+      "unique genes LogFC < 0",
       "common genes FDR > 0.05"
     )
   ) +
   labs(fill = "ROSMAP Differential Quantification") +
   theme(
-    axis.text.x = element_text(angle = 45, hjust = 1, size = 13),
-    axis.text.y = element_text(size = 13),
-    axis.title.x.bottom = element_text(size = 15),
-    axis.title.y.left = element_text(size = 15),
+    axis.text.x     = element_text(angle = 45, hjust = 1, size = 13),
+    axis.text.y     = element_text(size = 13),
+    axis.title.x    = element_text(size = 15),
+    axis.title.y    = element_text(size = 15),
     legend.position = c(0.18, 0.8),
-    legend.text = element_text(size = 12),
-    legend.title = element_text(size = 14),
-    strip.text = element_text(size = 12)
+    legend.text     = element_text(size = 12),
+    legend.title    = element_text(size = 14),
+    strip.text      = element_text(size = 12)
   )
 
 # ==== Save Plot ====
 ggsave(
-  filename = output_pdf,
-  plot = g,
-  device = cairo_pdf,
-  width = 12,
-  height = 6
+  filename      = output_pdf,
+  plot          = g,
+  width         = 12,
+  height        = 6,
+  useDingbats   = FALSE
 )
