@@ -1,3 +1,4 @@
+
 # ==== Libraries ====
 library(data.table)
 library(ggplot2)
@@ -63,14 +64,14 @@ plot_assembly_pair <- function(df, pattern, x_label, y_label, title) {
       labels = c(
         "common genes LogFC > 0",
         "unique genes LogFC > 0",
-        "common genes LogFC ≤ 0",
-        "unique genes LogFC ≤ 0"
+        "common genes LogFC < 0",
+        "unique genes LogFC < 0"
       )
     ) +
     labs(color = "DQ", shape = "FDR") +
     geom_abline(intercept = 0, slope = 1, linetype = "dashed", alpha = 0.25) +
     coord_fixed() +
-    scale_shape_manual(values = c(19, 17), labels = c("≤ 0.05", "> 0.05")) +
+    scale_shape_manual(values = c(19, 17), labels = c("< 0.05", "> 0.05")) +
     theme(
       axis.text.x = element_text(size = 10),
       axis.text.y = element_text(size = 10),
@@ -98,21 +99,28 @@ assembly_pairs <- list(
   T2T_v43   = c("T2T_v43|T2Tv43",    "GRCh38.13", "T2T-CHM13v2.0")
 )
 
-# ==== Generate Plots ====
+# ==== Generate and Save Individual Plots ====
 plot_list <- list()
 
 for (pair in names(assembly_pairs)) {
   pattern <- assembly_pairs[[pair]][1]
   xlab <- paste("Log (count per million) in", assembly_pairs[[pair]][2])
   ylab <- paste("Log (count per million) in", assembly_pairs[[pair]][3])
-  filename <- paste0(pair, "_DQ_plot_ROSMAP.pdf")  # Used as plot title placeholder
-  title <- filename
+  filename <- paste0(pair, "_DQ_plot_ROSMAP.pdf")
 
   message("Generating plot for ", pair)
-  p <- plot_assembly_pair(all_data, pattern, xlab, ylab, title)
+  p <- plot_assembly_pair(all_data, pattern, xlab, ylab, filename)
 
   if (inherits(p, "gg")) {
     plot_list[[pair]] <- p
+    # Save each plot individually
+    ggsave(
+      filename = file.path(output_dir, filename),
+      plot = p,
+      bg = "white",
+      useDingbats = FALSE
+    )
+    message("Saved plot to: ", file.path(output_dir, filename))
   }
 }
 
@@ -135,8 +143,8 @@ if (length(plot_list) > 0) {
          width = 2.8 * ceiling(length(plot_list) / 2),
          height = 7,
          units = "in",
-         device = cairo_pdf,
-         bg = "white")
+         bg = "white",
+         useDingbats=FALSE)
 
   message("Saved combined MA plot sheet to: ", output_pdf)
 } else {
