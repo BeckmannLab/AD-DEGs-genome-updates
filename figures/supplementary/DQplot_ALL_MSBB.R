@@ -1,144 +1,78 @@
-# ==== Libraries ====
-library(data.table)
-library(ggplot2)
-library(ggnewscale)
-library(dplyr)
-library(patchwork)
+# Load libraries necessary for data manipulation and plotting
+dependency_packages <- c("ggplot2", "data.table", "tidyr", "GGally")
+invisible(lapply(dependency_packages, library, character.only = TRUE))
 
-# ==== Load Data ====
-all_data <- as.data.table(readRDS(data_path))
-gene_map <- fread(gene_map_path)[, .(symbol = `Approved symbol`, gene = `Ensembl gene ID`)]
+# Read the main results and annotation data into R objects
+all           <- readRDS(rds_results)
+all_info_MSBB <- readRDS(rds_info)
 
-# ==== Plotting Function ====
-plot_assembly_pair <- function(df, pattern, x_label, y_label, title) {
-  cols <- grep(pattern, colnames(df), value = TRUE)
-  if (length(cols) < 5) {
-    message("Skipping ", pattern, ": insufficient matching columns")
-    return(NULL)
-  }
+# Convert the 'for_plot' column into a factor to control the display order in the plot
+all_info_MSBB$for_plot <- factor(
+  all_info_MSBB$for_plot,
+  levels = c("New_TRUE", "New_FALSE", "Old_TRUE", "Old_FALSE", "notSignif_TRUE")
+)
 
-  subset <- df[, c(colnames(df)[1], cols), with = FALSE]
-  subset <- subset[complete.cases(subset[, 2:6, with = FALSE])]
-  colnames(subset) <- gsub(paste0("_", gsub("\\|.*", "", pattern)), "", colnames(subset))
+# Custom color palette for each differential category passed to scale_fill_manual
+cbPalette <- c(
+  "#F5793A",  # common genes with positive LogFC
+  "#A95AA1",  # unique genes with positive LogFC
+  "#85C0F9",  # common genes with non-positive LogFC
+  "#0F2080",  # unique genes with non-positive LogFC
+  "#999999"   # genes with FDR above significance threshold
+)
 
-  common_status_col <- grep("common_status", colnames(subset), value = TRUE)
-  if (length(common_status_col) != 1) {
-    message("Skipping ", pattern, ": could not determine common status column")
-    return(NULL)
-  }
+# Rename assembly identifiers to a more readable format using a named vector
+assembly_map <- c(
+  "GRCh37-NCBI36"       = "GRCh37/NCBI36",
+  "GRCh38.12-NCBI36"    = "GRCh38.p12/NCBI36",
+  "GRCh38.13-NCBI36"    = "GRCh38.p13/NCBI36",
+  "CHM13v2.0-NCBI36"     = "T2T-CHM13v2.0/NCBI36",
+  "GRCh38.12-GRCh37"    = "GRCh38.p12/GRCh37",
+  "GRCh38.13-GRCh37"    = "GRCh38.p13/GRCh37",
+  "CHM13v2.0-GRCh37"     = "T2T-CHM13v2.0/GRCh37",
+  "GRCh38.13-GRCh38.12" = "GRCh38.p13/GRCh38.p12",
+  "CHM13v2.0-GRCh38.12"  = "T2T-CHM13v2.0/GRCh38.p12",
+  "CHM13v2.0-GRCh38.13"  = "T2T-CHM13v2.0/GRCh38.p13"
+)
+all_info_MSBB$assembly <- factor(
+  assembly_map[all_info_MSBB$assembly],
+  levels = unname(assembly_map)
+)
 
-  subset$direction <- ifelse(subset$logFC > 0, "New", "Old")
-  subset$for_plot <- paste0(subset$direction, "_", subset[[common_status_col]])
-  subset[, `:=`(
-    logCPM_Old = AveExpr - logFC / 2,
-    logCPM_New = AveExpr + logFC / 2
-  )]
 
-  de <- copy(subset)
-  setnames(de, 1, "gene")
-  de[, gene := tstrsplit(gene, ".", fixed = TRUE, keep = 1)]
-  de <- merge(de, gene_map, by = "gene", all.x = TRUE)
-
-  de[, DEG := ifelse(adj.P.Val < 0.05, "DEG", "NOTDEG")]
-  setorder(de, AveExpr)
-
-  de[, DQ := fifelse(logFC > 0, "new_one", "old_one")]
-  de[, for_plot2 := paste0(DQ, "_", get(common_status_col))]
-  de[, for_plot2 := factor(for_plot2, levels = c("new_one_TRUE", "new_one_FALSE", "old_one_TRUE", "old_one_FALSE"))]
-
-  cbPalette <- c("#F5793A", "#A95AA1", "#85C0F9", "#0F2080")
-
-  p <- ggplot(slice_sample(de, prop = 1)) +
-    aes(x = logCPM_Old, y = logCPM_New, shape = DEG) +
-    geom_abline(aes(slope = 1, intercept = 0, color = "identity line:LogFC = 0"),
-                data = data.frame(dummy = 1), linetype = "dashed") +
-    scale_color_manual(values = "black", name = "") +
-    new_scale_colour() +
-    geom_point(size = 2.0, alpha = 0.3, aes(color = for_plot2)) +
-    theme_minimal() +
-    scale_x_continuous(name = x_label) +
-    scale_y_continuous(name = y_label) +
-    scale_color_manual(
+g = ggplot(all_info_MSBB, aes(x = assembly, fill = for_plot)) +
+    geom_bar(stat = "count", position = "dodge") +
+    scale_fill_manual(
       values = cbPalette,
       labels = c(
         "common genes LogFC > 0",
         "unique genes LogFC > 0",
-        "common genes LogFC ≤ 0",
-        "unique genes LogFC ≤ 0"
+        "common genes LogFC < 0",
+        "unique genes LogFC < 0",
+        "common genes FDR > 0.05"
       )
     ) +
-    labs(color = "DQ", shape = "FDR") +
-    geom_abline(intercept = 0, slope = 1, linetype = "dashed", alpha = 0.25) +
-    coord_fixed() +
-    scale_shape_manual(values = c(19, 17), labels = c("≤ 0.05", "> 0.05")) +
-    theme(
-      axis.text.x = element_text(size = 10),
-      axis.text.y = element_text(size = 10),
-      legend.text = element_text(size = 10),
-      legend.title = element_text(size = 11),
-      axis.title = element_text(size = 11),
-      plot.title = element_blank()
+    labs(
+      x    = "Reference Comparison",
+      y    = "Genes Expressed",
+      fill = "MSBB Differential Quantification"
     ) +
-    guides(color = guide_legend(override.aes = list(shape = 15)))
-
-  return(p)
-}
-
-# ==== Assembly Pairs ====
-assembly_pairs <- list(
-  hg19_hg18 = c("hg19_hg18|hg19hg18", "NCBI36", "GRCh37"),
-  v30_hg18  = c("v30_hg18|v30hg18",  "NCBI36", "GRCh38.12"),
-  v43_hg18  = c("v43_hg18|v43hg18",  "NCBI36", "GRCh38.13"),
-  T2T_hg18  = c("T2T_hg18|T2Thg18",  "NCBI36", "T2T-CHM13v2.0"),
-  v30_hg19  = c("v30_hg19|v30hg19",  "GRCh37", "GRCh38.12"),
-  v43_hg19  = c("v43_hg19|v43hg19",  "GRCh37", "GRCh38.13"),
-  T2T_hg19  = c("T2T_hg19|T2Thg19",  "GRCh37", "T2T-CHM13v2.0"),
-  v43_v30   = c("v43_v30|v43v30",    "GRCh38.12", "GRCh38.13"),
-  T2T_v30   = c("T2T_v30|T2Tv30",    "GRCh38.12", "T2T-CHM13v2.0"),
-  T2T_v43   = c("T2T_v43|T2Tv43",    "GRCh38.13", "T2T-CHM13v2.0")
-)
-
-# ==== Generate Plots ====
-plot_list <- list()
-
-for (pair in names(assembly_pairs)) {
-  pattern <- assembly_pairs[[pair]][1]
-  xlab <- paste("Log (count per million) in", assembly_pairs[[pair]][2])
-  ylab <- paste("Log (count per million) in", assembly_pairs[[pair]][3])
-  filename <- paste0(pair, "_DQ_plot_MSBB.pdf")  # Used as plot title placeholder
-  title <- filename
-
-  message("Generating plot for ", pair)
-  p <- plot_assembly_pair(all_data, pattern, xlab, ylab, title)
-
-  if (inherits(p, "gg")) {
-    plot_list[[pair]] <- p
-  }
-}
-
-# ==== Save Combined Plot ====
-if (length(plot_list) > 0) {
-  combined_plot <- wrap_plots(plot_list, nrow = 2, byrow = TRUE) +
-    plot_layout(guides = "collect") &
+    theme_minimal() +
     theme(
-      plot.margin = margin(6, 6, 6, 6),
-      legend.position = "bottom",
-      legend.box = "horizontal",
-      legend.box.background = element_rect(color = "black", size = 0.5),
-      plot.title = element_blank(),
-      axis.title.x = element_text(size = 10),
-      axis.title.y = element_text(size = 10),
-      axis.text = element_text(size = 9)
+      axis.text.x          = element_text(angle = 45, hjust = 1, vjust = 1, size = 20),
+      axis.text.y          = element_text(size = 20),
+      axis.title.x.bottom  = element_text(size = 22),
+      axis.title.y.left    = element_text(size = 22),
+      legend.position      = c(0, 1),
+      legend.justification = c(0, 1),
+      legend.text          = element_text(size = 15),
+      legend.title         = element_text(size = 17)
     )
 
-  ggsave(output_pdf, combined_plot,
-         width = 2.8 * ceiling(length(plot_list) / 2),
-         height = 7,
-         units = "in",
-         device = cairo_pdf,
-         bg = "white")
-
-  message("Saved combined MA plot sheet to: ", output_pdf)
-} else {
-  message("No plots were generated.")
-}
+ggsave(
+    filename        = path_save,
+    plot            = g,
+    width           = 10,
+    height          = 8,
+    useDingbats     = FALSE
+  )
