@@ -7,6 +7,7 @@ output_pdf <- file.path(output_dir, "proportion_coding_v_noncoding_DQ_assembly_R
 
 # ==== Libraries ====
 library(ggplot2)
+library(dplyr)
 
 # ==== Load Preprocessed Data ====
 all_info_ROSMAP <- readRDS(input_rds)
