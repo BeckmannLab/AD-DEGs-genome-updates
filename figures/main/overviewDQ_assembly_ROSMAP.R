@@ -70,12 +70,10 @@ save_plot_no_dingbats <- function(plot_obj, filename, width = 10, height = 8) {
   )
 }
 
-# ==== Main Workflow ====
+# ========
 
 # Load data
-all_info_MSBB    <- readRDS(input_rds_msbb)
 info_all_ROSMAP  <- readRDS(input_rds_rosmap)
-# (You can also load `all` if needed: readRDS(input_rds_all))
 
 # Prepare data for plotting
 info_all_ROSMAP <- info_all_ROSMAP %>%
