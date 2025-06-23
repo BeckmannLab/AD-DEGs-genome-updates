@@ -84,7 +84,20 @@ results <- do.call(rbind, results_list)
 results <- results[complete.cases(results), ]      # drop rows with any NA
 
 ## Plot -----------------------------------------------------------------------
+order_vec <- c(
+  "GRCh37/NCBI36",
+  "GRCh38.p12/NCBI36",
+  "GRCh38.p13/NCBI36",
+  "T2T-CHM13v2.0/NCBI36",
+  "GRCh38.p12/GRCh37",
+  "GRCh38.p13/GRCh37",
+  "CHM13v2.0/GRCh37",
+  "GRCh38.p13/GRCh38.p12",
+  "CHM13v2.0/GRCh38.p12",
+  "CHM13v2.0/GRCh38.p13"
+)
 
+results$assembly <- factor(results$assembly, levels = order_vec)
 g <- ggplot(results, aes(assembly, fill = Significant)) +
   geom_bar(position = "dodge") +
   labs(x = "Reference Comparisons", y = "Expressed Gene Count") +
