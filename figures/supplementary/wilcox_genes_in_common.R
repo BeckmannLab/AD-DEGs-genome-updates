@@ -102,7 +102,7 @@ g <- ggplot(results, aes(assembly, fill = Significant)) +
   geom_bar(position = "dodge") +
   labs(x = "Reference Comparisons", y = "Expressed Gene Count") +
   scale_fill_manual(values = c("red", "blue"),
-                    labels = c("> 0.05", "< 0.05"),
+                    labels = c("> 0.05", "<= 0.05"),
                     name   = "Bonferroni") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 50, hjust = 0.8))
