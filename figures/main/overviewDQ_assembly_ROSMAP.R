@@ -1,3 +1,9 @@
+# ==== Input & Output Filenames (relative to your working directory) ====
+input_rds_all    <- "with_signif_categories_results_assembly_ROSMAP_1.30.24.RDS" 
+input_rds_msbb   <- "all_info_MSBB.RDS"
+input_rds_rosmap <- "all_info_ROSMAP.RDS"
+output_pdf       <- file.path(output_dir, "overviewDQ_assembly_ROSMAP.pdf")
+
 # ==== Libraries ====
 library(ggplot2)
 
