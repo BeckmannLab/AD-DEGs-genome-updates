@@ -57,21 +57,32 @@ duplicate_rows_based_on_count <- function(dataset, column_to_duplicate, count_da
     rbind(one_occ, dataset_dup, non_count)
 }
 
-## Load expression count matrices and metadata ##
-genedata_org_hg18 <- fread(hg18_path, data.table = FALSE)
-rownames(genedata_org_hg18) <- genedata_org_hg18$Geneid; genedata_org_hg18$Geneid <- NULL; print(dim(genedata_org_hg18))
-genedata_org_hg19 <- fread(hg19_path, data.table = FALSE)
-rownames(genedata_org_hg19) <- genedata_org_hg19$Geneid; genedata_org_hg19$Geneid <- NULL; print(dim(genedata_org_hg19))
-genedata_org_v30  <- fread(v30_path, data.table = FALSE)
-rownames(genedata_org_v30) <- genedata_org_v30$Geneid; genedata_org_v30$Geneid <- NULL; print(dim(genedata_org_v30))
-genedata_org_v43  <- fread(v43_path, data.table = FALSE)
-rownames(genedata_org_v43) <- genedata_org_v43$Geneid; genedata_org_v43$Geneid <- NULL; print(dim(genedata_org_v43))
-genedata_org_T2T <- fread(t2t_path, data.table = FALSE)
-rownames(genedata_org_T2T) <- genedata_org_T2T$Geneid; genedata_org_T2T$Geneid <- NULL; print(dim(genedata_org_T2T))
-map     <- fread(map_path)
-all_var <- read.delim(all_var_path, sep = "\t", header = FALSE)
-ids_to_keep   <- readRDS(ids_output_path)
-info_all_base <- readRDS(info_output_path)
+# Covariate and sample ID inputs
+covariate_path       <- "info_all.RDS"
+ids_input_path       <- "voom_normalized_counts_allRin_allpmi_nomislabelled.RDS"
+
+# Metadata output
+ids_output_path      <- "ids_to_keep.RDS"
+info_output_path     <- "infoall_09.13.23.RDS"
+
+# Count matrix files per assembly
+hg18_path            <- "allcount_matrix_2023-04-11.txt"
+hg19_path            <- "allcount_matrix_2023-04-12.txt"
+v30_path             <- "allcount_matrix_2023-04-11.txt"
+v43_path             <- "allcount_matrix_2023-04-11.txt"
+t2t_path             <- "allcount_matrix_2023-07-03.txt"
+map_path             <- "map_genename_T2T_ensembl_from_gtf.txt"
+all_var_path         <- "/sc/arion/projects/mscic1/results/anina/fun_project_4.23/msbb/all_var.txt"
+
+## Prepare covariate and sample ID files ##
+info_all_base <- readRDS(covariate_path)
+ids_to_keep   <- readRDS(ids_input_path)
+
+# Align and sort covariate data
+info_all_base <- info_all_base[match(colnames(ids_to_keep), make.names(info_all_base$sample)), ]
+info_all_base <- info_all_base[order(info_all_base$sample), ]
+info_all_base$original_sample <- info_all_base$sample
+ids_to_keep <- info_all_base$sample
 
 ## Setup parallel backend ##
 library(foreach); library(doParallel)
