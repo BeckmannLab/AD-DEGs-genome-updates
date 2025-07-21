@@ -3,4 +3,4 @@ Code for Lund et al. Differentially Expressed Genes in Alzheimer’s Disease Var
 
 figures: code for making figures
 RAPiD: code for running for running RAPiD
-misc: miscellaneous code  
+misc: miscellaneous code including code to make intermediary files used in other analyses
