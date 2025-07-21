@@ -1,6 +1,11 @@
 # Load libraries necessary for data manipulation and plotting
-dependency_packages <- c("ggplot2", "data.table", "tidyr", "GGally")
-invisible(lapply(dependency_packages, library, character.only = TRUE))
+library(ggplot2)
+library(data.table)
+library(tidyr)
+library(GGally)
+
+rds_results <- file.path(base_dir, "with_signif_categories_results_assembly_MSBB_3.30.24.RDS")
+rds_info    <- file.path(base_dir, "all_info_MSBB.RDS")
 
 # Read the main results and annotation data into R objects
 all           <- readRDS(rds_results)
