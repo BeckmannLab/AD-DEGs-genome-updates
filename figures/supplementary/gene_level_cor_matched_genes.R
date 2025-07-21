@@ -10,6 +10,16 @@ suppressPackageStartupMessages({
   library(tidyverse)
 })
 
+##LOAD
+path_hg18 <- "allcount_matrix_2023-04-11.txt"
+path_hg19 <- "allcount_matrix_2023-04-12.txt"
+path_v30 <- "allcount_matrix_2023-04-11.txt"
+path_v43 <- "allcount_matrix_2023-04-11.txt"
+path_T2T <- "allcount_matrix_2023-07-03.txt"
+path_map <- "map_genename_T2T_ensembl_from_gtf.txt"
+path_assembly_map <- "rbind_map_between_assemblies_10.04.23.RDS"
+
+
 ##FUNCTIONS
 load_expression <- function(path, gene_col = "Geneid", data_cols = 6:644) {
   df <- fread(path, data.table = FALSE)
