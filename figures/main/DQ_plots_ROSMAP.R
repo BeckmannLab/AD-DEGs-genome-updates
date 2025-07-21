@@ -7,8 +7,8 @@ library(dplyr)
 library(patchwork)
 
 # ==== Load Data ====
-all_data <- as.data.table(readRDS(data_path))
-gene_map <- fread(gene_map_path)[, .(symbol = `Approved symbol`, gene = `Ensembl gene ID`)]
+all_data <- as.data.table(readRDS(with_signif_categories_results_assembly_ROSMAP_1.30.24.RDS))
+gene_map <- fread(gene_ids_ensembl2symbol_fromHUGO_10JUN2020.tsv)[, .(symbol = `Approved symbol`, gene = `Ensembl gene ID`)]
 
 # ==== Plotting Function ====
 plot_assembly_pair <- function(df, pattern, x_label, y_label, title) {
