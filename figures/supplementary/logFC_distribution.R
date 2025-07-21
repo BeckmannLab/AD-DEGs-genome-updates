@@ -3,6 +3,10 @@ library(ggplot2)
 library(gridExtra)
 library(RColorBrewer)
 
+# === Paths ===
+data_path <- "with_signif_categories_results_assembly_MSBB_3.30.24.RDS"
+gene_map_path <- "gene_ids_ensembl2symbol_fromHUGO_10JUN2020.tsv"
+
 # === Load data and assign label ===
 load_data <- function(subpath, label) {
   df <- read.delim(file.path(base_dir, subpath, "DE", "DE_assembly_corrected_for_id_assembly_test.txt"))
