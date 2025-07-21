@@ -1,10 +1,5 @@
 # ==== Set Working Directories (Edit or Remove Before Publishing) ====
-data_dir <- "/sc/arion/projects/mscic1/results/anina/fun_project_4.23/analysis/"
-output_dir <- "/hpc/users/lunda02/www/plots/assembly_paper/assembly/"
-
 input_rds <- file.path(data_dir, "with_coding_status_all_info_ROSMAP.RDS")
-output_pdf <- file.path(output_dir, "proportion_coding_v_noncoding_DQ_assembly_ROSMAP.pdf")
-
 # ==== Libraries ====
 library(ggplot2)
 library(dplyr)
