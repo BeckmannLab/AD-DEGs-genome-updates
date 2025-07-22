@@ -8,7 +8,8 @@ library(patchwork)
 
 # ==== Load Data ====
 all_data <- as.data.table(readRDS(with_signif_categories_results_assembly_ROSMAP_1.30.24.RDS)) #see misc for this file generation
-gene_map <- fread(gene_ids_ensembl2symbol_fromHUGO_10JUN2020.tsv)[, .(symbol = `Approved symbol`, gene = `Ensembl gene ID`)] #see 
+gene_map <- fread(gene_ids_ensembl2symbol_fromHUGO_10JUN2020.csv)[, .(symbol = `Approved symbol`, gene = `Ensembl gene ID`)] #see AD-DEGs-genome-updates
+/files/gene_ids_ensembl2symbol_fromHUGO_10JUN2020.csv
 
 # ==== Plotting Function ====
 plot_assembly_pair <- function(df, pattern, x_label, y_label, title) {
