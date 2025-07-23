@@ -4,12 +4,9 @@ library(data.table)
 library(tidyr)
 library(GGally)
 
-rds_results <- file.path(base_dir, "with_signif_categories_results_assembly_MSBB_3.30.24.RDS")
-rds_info    <- file.path(base_dir, "all_info_MSBB.RDS")
-
 # Read the main results and annotation data into R objects
-all           <- readRDS(rds_results)
-all_info_MSBB <- readRDS(rds_info)
+all           <- readRDS("with_signif_categories_results_assembly_MSBB_3.30.24.RDS")
+all_info_MSBB <- readRDS("all_info_MSBB.RDS")
 
 # Convert the 'for_plot' column into a factor to control the display order in the plot
 all_info_MSBB$for_plot <- factor(
