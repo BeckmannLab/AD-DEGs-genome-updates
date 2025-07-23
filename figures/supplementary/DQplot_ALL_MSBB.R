@@ -5,7 +5,7 @@ library(tidyr)
 library(GGally)
 
 # Read the main results and annotation data into R objects
-all           <- readRDS("with_signif_categories_results_assembly_MSBB_3.30.24.RDS")
+all           <- readRDS("with_signif_categories_results_assembly_MSBB_3.30.24.RDS") #see AD-DEGs-genome-updates/misc/with_signif_categories_results_assembly_MSBB_3.30.24.R
 all_info_MSBB <- readRDS("all_info_MSBB.RDS")
 
 # Convert the 'for_plot' column into a factor to control the display order in the plot
