@@ -28,7 +28,7 @@ rename_labels <- function(labels) {
 ################################################################################
 # LOAD DATA
 ################################################################################
-res <- readRDS("cor_msbb_rosmap.RDS")
+res <- readRDS("cor_msbb_rosmap.RDS") #see AD-DEGs-genome-updates/misc/cor_msbb_rosmap.R
 
 ################################################################################
 # PREPARE DIAGONAL DATA FRAME
