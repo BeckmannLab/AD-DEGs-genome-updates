@@ -1,3 +1,4 @@
+###this file is just pulling DE results and formating in a way to make plotting easier
 # -----------------------------
 # Clear workspace
 # -----------------------------
