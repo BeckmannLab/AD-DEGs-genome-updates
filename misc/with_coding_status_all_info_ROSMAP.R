@@ -1,3 +1,5 @@
+## Clear workspace and load required libraries
+# Remove all objects from the current R environment
 rm(list=ls())
 # Load ggplot2 for plotting, data.table for fast file reading, tidyr for data reshaping,
 # GGally for ggpairs, and stringr for string manipulation
@@ -7,187 +9,238 @@ library(tidyr)
 library(GGally)
 library(stringr)
 
-## Differential expression (DE) outputs - direct from toptable
-# Read DE results for various assembly comparisons into separate data.frames
-hg18_hg19_DE = read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
-hg18_v30_DE  = read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
-hg19_v30_DE  = read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
-v30_v43_DE   = read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
-hg18_v43_DE  = read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
-hg19_v43_DE  = read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
-hg18_T2T_DE  = read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
-hg19_T2T_DE  = read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
-v30_T2T_DE   = read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
-v43_T2T_DE   = read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
+## DE output - direct output from toptable
+# Read DE results for each assembly comparison into data.frames
+hg18_hg19_DE=read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
+hg18_v30_DE=read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
+hg19_v30_DE=read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
+v30_v43_DE=read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
+hg18_v43_DE=read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
+hg19_v43_DE=read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
+hg18_T2T_DE=read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
+hg19_T2T_DE=read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
+v30_T2T_DE=read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
+v43_T2T_DE=read.delim("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/Rosmap_combos/T2T_v43/DE/DE_assembly_corrected_for_id_assembly_test.txt")
 
-## GTF annotation files for each assembly
-hg18_gtf = fread("Homo_sapiens.NCBI36.53.gtf")  # NCBI36/hg18 annotation
-hg19_gtf = fread("Homo_sapiens.GRCh37.70.gtf")  # GRCh37/hg19 annotation
-v30_gtf  = fread("gencode.v30.primary_assembly.annotation.gtf")
-v43_gtf  = fread("gencode.v43.primary_assembly.annotation.gtf", data.table=FALSE)
-t2t_gtf  = fread("Homo_sapiens_GCA_009914755.4_2022_07_genes.gtf", data.table=FALSE)
+# GTF files
+hg18_gtf=fread("Homo_sapiens.NCBI36.53.gtf")        # Load hg18 GTF annotation
+hg19_gtf=fread("Homo_sapiens.GRCh37.70.gtf")        # Load hg19 GTF annotation
+v30_gtf <- fread("gencode.v30.primary_assembly.annotation.gtf")     # Load GRCh38 v30 GTF
+v43_gtf <- fread("gencode.v43.primary_assembly.annotation.gtf", data.table= FALSE)  # Load GRCh38 v43 GTF
+t2t_gtf <- fread("Homo_sapiens_GCA_009914755.4_2022_07_genes.gtf",  data.table = FALSE)  # Load T2T GTF
 
-## Load mapping between assemblies for common gene names
-mapping = readRDS("rbind_map_between_assemblies_10.04.23.RDS")  # map file created via misc script
+### Mapping between assemblies for common gene names
+mapping=readRDS("rbind_map_between_assemblies_10.04.23.RDS")  # Precomputed mapping
 
-### Extract coding status per gene for each assembly ###
+## Pre-formatting per assembly
 
-# hg18
-gt = hg18_gtf\ ncolnames(gt) = c("seqname","source","region","start","end","score","strand","frame","V9")
-# split V9 on ';' to new columns
-attrs = data.frame(do.call(rbind, strsplit(as.character(gt$V9), ";", fixed=TRUE)))
-gt2 = cbind(gt, attrs)
-# select gene_id and type column, then split gene_id field
-gt_sub = gt2[, c("X1","source")]
-gt_id = data.frame(do.call(rbind, strsplit(as.character(gt_sub$X1), " ", fixed=TRUE)))
-gt_clean = cbind(gene_id_raw=gt_id$V2, status=gt_sub$source)
-# remove quotes
-gt_clean = transform(gene_id_raw = gsub('"','', gt_clean$gene_id_raw))
-hg18_final = data.frame(gene_id = gsub('"', '', gt_clean$gene_id_raw), status = gt_clean$status, stringsAsFactors=FALSE)
-# collapse non-protein_coding entries
-hg18_final$status[hg18_final$status != "protein_coding"] <- "non_coding"
-hg18_final = unique(hg18_final)
+# hg18: Parse GTF attributes and extract gene_id and status
+colnames(hg18_gtf)=c("genomic region","type","region","start","end","dot","strand","not_sure","V9")
+split_columns <- data.frame(do.call("rbind", strsplit(as.character(hg18_gtf$V9), ";",fixed = TRUE)))  # Split attributes on ;
+result_df <- cbind(hg18_gtf, split_columns)
+sub_hg18=result_df[,c("X1", "type")]   # Select gene_id field and type column
+hg18_df=data.frame(do.call("rbind", strsplit(as.character(sub_hg18$X1), " ",fixed = TRUE)))  # Split gene_id field on space
+result_df <- cbind(hg18_df,sub_hg18$type)
+result_df$X2 <- gsub('"', '', result_df$X2)   # Remove quotes around gene_id
+hg18_final=result_df[,2:3]
+colnames(hg18_final)=c("gene_id", "status")  # Rename columns
+hg18_final$status[hg18_final$status != "protein_coding"] <- "non_coding"  # Collapse non-coding statuses
+hg18_final=unique(hg18_final)  # Keep unique rows
 
-# hg19
-gt = hg19_gtf
-colnames(gt) = c("seqname","source","region","start","end","score","strand","frame","V9")
-attrs = data.frame(do.call(rbind, strsplit(as.character(gt$V9), ";", fixed=TRUE)))
-gt2 = cbind(gt, attrs)
-gt2 = gt2[gt2$region=="exon",]
-# extract gene_id and gene_type fields
-id_field = str_replace_all(str_extract_all(gt2$X1, '"([^"]+)"'), '"','')
-type_field = str_replace_all(str_extract_all(gt2$X5, '"([^"]+)"'), '"','')
-hg19_df = data.frame(gene_id=id_field, status=type_field, stringsAsFactors=FALSE)
-hg19_df$status[hg19_df$status != "protein_coding"] <- "non_coding"
-hg19_final = unique(hg19_df)
+# hg19: Similar parsing but filter to exons and extract gene_type
+colnames(hg19_gtf)=c("genomic region","type","region","start","end","dot","strand","not_sure","V9")
+split_columns <- data.frame(do.call("rbind", strsplit(as.character(hg19_gtf$V9), ";",fixed = TRUE)))
+result_df <- cbind(hg19_gtf, split_columns)
+result_df=result_df[which(result_df$region=="exon"),]  # Keep only exon entries
+sub_hg19=result_df[,c("X1", "X5")]  # X1 contains gene_id, X5 contains gene_type
+sub_hg19$status <- str_replace_all(str_extract_all(sub_hg19$X5, '"([^"]+)"'), '"', '')  # Extract and clean gene_type
+sub_hg19$gene_id <- str_replace_all(str_extract_all(sub_hg19$X1, '"([^"]+)"'), '"', '')  # Extract and clean gene_id
+dag19_df=sub_hg19[,c("gene_id", "status")]  # Subset to relevant columns
+hg19_df=unique(hg19_df)
+hg19_df$status[hg19_df$status != "protein_coding"] <- "non_coding"  # Collapse non-coding statuses
+hg19_final=unique(hg19_df)  # Unique rows
 
-# v30
-gt = v30_gtf
-colnames(gt) = c("seqname","source","region","start","end","score","strand","frame","V9")
-gt2 = gt[gt$region=="exon",]
-gene_type = sub(".*gene_type\\s(.*?);.*", "\\1", gt2$V9)
-gene_id   = sub(".*gene_id\\s(.*?);.*",   "\\1", gt2$V9)
-df30 = data.frame(gene_id = gsub('"','',gene_id), status = gsub('"','',gene_type), stringsAsFactors=FALSE)
-df30$status[df30$status != "protein_coding"] <- "non_coding"
-v30_tmp = unique(df30)
-# strip version suffix (e.g. ENSG000001234.5 -> ENSG000001234)
-v30_tmp$gene_id = sapply(strsplit(v30_tmp$gene_id, ".", fixed=TRUE), `[`, 1)
-v30_final = v30_tmp
+# v30: Extract gene_type and gene_id using regex, filter exons
+colnames(v30_gtf)=c("genomic region","type","region","start","end","dot","strand","not_sure","V9")
+result_df=v30_gtf[which(v30_gtf$region=="exon"),]  # Exon entries only
+result <- sub(".*gene_type\\s(.*?);.*", "\\1", result_df$V9)  # Pull gene_type field
+result2 <- sub(".*gene_id\\s(.*?);.*", "\\1", result_df$V9)  # Pull gene_id field
+result_df2 <- cbind(result2, result)
+result_df2 <- as.data.frame(result_df2)
+result_df2$result <- gsub('"', '', result_df2$result)  # Remove quotes
+result_df2$result2 <- gsub('"', '', result_df2$result2)  # Remove quotes
+colnames(result_df2)=c("gene_id", "status")
+result_df2$status[result_df2$status != "protein_coding"] <- "non_coding"
+v30_final=result_df2
+v30_final=unique(v30_final)
+v30_final$Geneid_noVersion=unlist(lapply(strsplit(as.character(v30_final$gene_id),".",fixed=TRUE),function(x){  # Strip version suffix if needed
+		if(sum(grepl("_", x))==FALSE){
+			x[1]
+		}else{
+			paste(x[1], paste(unlist(strsplit(as.character(x[2]),"_"))[2:3],collapse = "_"), sep="_")
+			}
+		}))
+v30_final=v30_final[,c(3,2)]
+colnames(v30_final)=c("gene_id", "status")  # Final v30 table
 
-# v43
-gt = v43_gtf
-colnames(gt) = c("seqname","source","region","start","end","score","strand","frame","V9")
-gt2 = gt[gt$region=="exon",]
-gene_type = sub(".*gene_type\\s(.*?);.*", "\\1", gt2$V9)
-gene_id   = sub(".*gene_id\\s(.*?);.*",   "\\1", gt2$V9)
-df43 = data.frame(gene_id = gsub('"','',gene_id), status = gsub('"','',gene_type), stringsAsFactors=FALSE)
-df43$status[df43$status != "protein_coding"] <- "non_coding"
-v43_tmp = unique(df43)
-# strip version
-v43_tmp$gene_id = sapply(strsplit(v43_tmp$gene_id, ".", fixed=TRUE), `[`, 1)
-v43_final = v43_tmp
+# v43: Same as v30 parsing
+colnames(v43_gtf)=c("genomic region","type","region","start","end","dot","strand","not_sure","V9")
+v43=v43_gtf[which(v43_gtf$region=="exon"),]
+result <- sub(".*gene_type\\s(.*?);.*", "\\1", v43$V9)
+result2 <- sub(".*gene_id\\s(.*?);.*", "\\1", v43$V9)
+result_df <- cbind(result2, result)
+result_df <- as.data.frame(result_df)
+result_df$result <- gsub('"', '', result_df$result)
+result_df$result2 <- gsub('"', '', result_df$result2)
+colnames(result_df)=c("gene_id", "status")
+result_df$status[result_df$status != "protein_coding"] <- "non_coding"
+v43_final=result_df
+v43_final=unique(v43_final)
+v43_final$Geneid_noVersion=unlist(lapply(strsplit(as.character(v43_final$gene_id),".",fixed=TRUE),function(x){
+		if(sum(grepl("_", x))==FALSE){
+			x[1]
+		}else{
+			paste(x[1], paste(unlist(strsplit(as.character(x[2]),"_"))[2:3],collapse = "_"), sep="_")
+			}
+		}))
+v43_final=v43_final[,c(3,2)]
+colnames(v43_final)=c("gene_id", "status")
 
-# T2T: extract gene_biotype instead of gene_type
-gt = t2t_gtf
-colnames(gt) = c("seqname","source","region","start","end","score","strand","frame","V9")
-gt2 = gt[gt$region=="exon",]
-gene_biotype = sub(".*gene_biotype\\s(.*?);.*","\\1", gt2$V9)
-gene_id      = sub(".*gene_id\\s(.*?);.*","\\1", gt2$V9)
-dfT2T = data.frame(gene_id=gsub('"','',gene_id), status=gsub('"','',gene_biotype), stringsAsFactors=FALSE)
-dfT2T$status[dfT2T$status != "protein_coding"] <- "non_coding"
-t2t_final = unique(dfT2T)
+# t2t: Extract gene_biotype
+colnames(t2t_gtf)=c("genomic region","type","region","start","end","dot","strand","not_sure","V9")
+t2t=t2t_gtf[which(t2t_gtf$region=="exon"),]
+result <- sub(".*gene_biotype\\s(.*?);.*", "\\1", t2t$V9)
+result2 <- sub(".*gene_id\\s(.*?);.*", "\\1", t2t$V9)
+result_df <- cbind(result2, result)
+result_df <- as.data.frame(result_df)
+result_df$result <- gsub('"', '', result_df$result)
+result_df$result2 <- gsub('"', '', result_df$result2)
+colnames(result_df)=c("gene_id", "status")
+result_df$status[result_df$status != "protein_coding"] <- "non_coding"
+t2t_final=result_df
+t2t_final=unique(t2t_final)  # Unique T2T status
 
-## Prepare comparison grids and merge DE with coding status
-# Non-T2T
-pairs      = c("hg18_hg19","hg18_v30","hg19_v30","v30_v43","hg18_v43","hg19_v43")
-de_out     = c("hg18_hg19_DE","hg18_v30_DE","hg19_v30_DE","v30_v43_DE","hg18_v43_DE","hg19_v43_DE")
-combos     = c("GRCh37-NCBI36","GRCh38.12-NCBI36","GRCh38.12-GRCh37","GRCh38.13-GRCh38.12","GRCh38.13-NCBI36","GRCh38.13-GRCh37")
-gtf1      = list(hg19_final, v30_final, v30_final, v43_final, v43_final, v43_final)
-gtf2      = list(hg18_final, hg18_final, hg19_final, v30_final, hg18_final, hg19_final)
+# Non-T2T comparison grids
+pairs = c("hg18_hg19","hg18_v30","hg19_v30","v30_v43","hg18_v43","hg19_v43")
+de_output = c("hg18_hg19_DE","hg18_v30_DE","hg19_v30_DE","v30_v43_DE","hg18_v43_DE","hg19_v43_DE")
+combos <- c("GRCh37-NCBI36","GRCh38.12-NCBI36","GRCh38.12-GRCh37", "GRCh38.13-GRCh38.12", "GRCh38.13-NCBI36", "GRCh38.13-GRCh37")
+gtf_files1 = c("hg19_final", "v30_final", "v30_final", "v43_final", "v43_final", "v43_final")
+gtf_files2 = c("hg18_final", "hg18_final","hg19_final", "v30_final", "hg18_final", "hg19_final")
+grid = as.data.frame(cbind(de_output,pairs,combos,gtf_files1,gtf_files2))
 
-grid = data.frame(pairs, de_out, combos, stringsAsFactors=FALSE)
-final_non_t2t = vector("list", nrow(grid))
-for(i in seq_len(nrow(grid))) {
-  message("Processing ", grid$pairs[i])
-  de = get(grid$de_out[i])  # DE table
-  # map common vs non-common genes
-  m    = mapping[grep(grid$pairs[i], mapping$combo),]
-  common   = na.omit(m)
-  not_common = m[!complete.cases(m),]
-  # annotate DE
-  de$sig_status = ifelse(de$adj.P.Val < 0.05, "Signif","notSignif")
-  de$direction  = ifelse(de$logFC>0, "New", ifelse(de$logFC<0, "Old", NA))
-  de$in_common  = !de$X %in% not_common$common_name
-  de$assembly   = grid$combos[i]
-  colnames(de)[1] = "gene_id"
-  de_sub = de[,c("gene_id","sig_status","direction","in_common","assembly")]
-  # merge with coding status tables
-  ref_all   = merge(gtf1[[i]], gtf2[[i]], by="gene_id", all=TRUE)
-  ref_de    = merge(ref_all, de_sub, by="gene_id", all=TRUE)
-  final_non_t2t[[i]] = ref_de
+# Loop for non-T2T
+final_non_t2t <- vector("list", nrow(grid))
+for (x in seq_len(nrow(grid))){
+	print(x)  # Iteration index
+	# DE
+	de_results = get(grid[x,1])
+
+	# in common mapping
+	reference_common=mapping[grep(grid[x,2], mapping$combo),]
+	reference_common <- na.omit(reference_common)
+  	de_reference_common=de_results[de_results$X %in% reference_common$common_name,]
+	print("common")
+
+	# not in common mapping
+	reference_not_common=mapping[grep(grid[x,2], mapping$combo),]
+	reference_not_common <- reference_not_common[!complete.cases(reference_not_common), ]
+  	de_reference_not_common=de_results[de_results$X %in% reference_not_common$common_name,]
+	print("not in common")
+
+  	# Annotate DE results
+  	de_results$sig_status="notSignif"
+	de_results$sig_status[de_results$adj.P.Val < 0.05 ]="Signif"
+	de_results$direction[de_results$logFC < 0 ]="Old"
+	de_results$direction[de_results$logFC > 0 ]="New"
+	de_results$in_common=TRUE
+	print("DE clean")
+  	de_results$in_common[de_results$X %in% reference_not_common$common_name]=FALSE
+  	de_results$assembly=grid[x,3]  # Assembly combo label
+	colnames(de_results)[1]="gene_id"
+	de_results_subset = de_results[,c("gene_id", "sig_status", "direction", "in_common", "assembly")]
+	print("combine")
+
+	# Fetch coding status tables
+	ref_final1 = get(grid[x,4])
+    print("ref1")
+
+	ref_final2 = get(grid[x,5])
+    print("ref2")
+
+    # Merge coding status and DE
+    both_ref_status=merge(ref_final1, ref_final2, all = T)
+	ref_new=merge(both_ref_status, de_results_subset, by = "gene_id", all = T)
+	print("done")
+	final_non_t2t[[x]] = ref_new
 }
-combined_df_non_T2T = do.call(rbind, final_non_t2t)
 
-# T2T comparisons
-grid_t2t = data.frame(
-  pairs = c("hg18_T2T","hg19_T2T","v30_T2T","v43_T2T"),
-  de_out = c("hg18_T2T_DE","hg19_T2T_DE","v30_T2T_DE","v43_T2T_DE"),
-  combos = c("CHM13v2.0-NCBI36","CHM13v2.0-GRCh37","CHM13v2.0-GRCh38.12","CHM13v2.0-GRCh38.13"),
-  stringsAsFactors=FALSE
-)
-final_t2t = vector("list", nrow(grid_t2t))
-for(i in seq_len(nrow(grid_t2t))) {
-  message("Processing ", grid_t2t$pairs[i])
-  de = get(grid_t2t$de_out[i])
-  m    = mapping[grep(grid_t2t$pairs[i], mapping$combo),]
-  common   = na.omit(m)
-  not_common = m[!complete.cases(m),]
-  de$sig_status = ifelse(de$adj.P.Val<0.05,"Signif","notSignif")
-  de$direction  = ifelse(de$logFC>0,"New", ifelse(de$logFC<0,"Old",NA))
-  de$in_common  = !de$X %in% not_common$common_name
-  de$assembly   = grid_t2t$combos[i]
-  colnames(de)[1] = "gene_id"
-  de_sub = de[,c("gene_id","sig_status","direction","in_common","assembly")]
-  # merge T2T status via mapping
-  t2t_map = mapping[mapping$combo==grid_t2t$pairs[i],]
-  t2t_status = merge(t2t_final, t2t_map, by.x="gene_id", by.y="assembly_2_orginal_gene_name", all=TRUE)
-  t2t_status = unique(data.frame(gene_id = t2t_status$common_name, status = t2t_status$status))
-  # combine reference and DE
-  ref_base = get(ifelse(grepl("hg18",grid_t2t$pairs[i]),"hg18_final", 
-                ifelse(grepl("hg19",grid_t2t$pairs[i]),"hg19_final", 
-                ifelse(grepl("v30",grid_t2t$pairs[i]),"v30_final","v43_final"))))
-  ref_comb  = merge(ref_base, t2t_status, by="gene_id", all=TRUE)
-  ref_de    = merge(ref_comb, de_sub, by="gene_id", all=TRUE)
-  final_t2t[[i]] = ref_de
+combined_df_non_T2T <- do.call(rbind, final_non_t2t)  # Combine all non-T2T
+
+### T2T comparisons
+pairs_t2t = c("hg18_T2T","hg19_T2T","v30_T2T","v43_T2T")
+de_output_t2t = c("hg18_T2T_DE","hg19_T2T_DE","v30_T2T_DE","v43_T2T_DE")
+combos_t2t = c("CHM13v2.0-NCBI36","CHM13v2.0-GRCh37","CHM13v2.0-GRCh38.12","CHM13v2.0-GRCh38.13")
+gtf_files1_t2t = c("t2t_final", "t2t_final", "t2t_final", "t2t_final")
+gtf_files2_t2t = c("hg18_final", "hg19_final", "v30_final", "v43_final")
+grid_t2t = as.data.frame(cbind(de_output_t2t,pairs_t2t,combos_t2t,gtf_files1_t2t,gtf_files2_t2t))
+
+# Loop for T2T
+final_t2t <- vector("list", nrow(grid_t2t))
+for (x in seq_len(nrow(grid_t2t))){
+	print(x)
+	# DE
+	de_results = get(grid_t2t[x,1])
+
+	# common vs not common mapping
+	reference_common=mapping[grep(grid_t2t[x,2], mapping$combo),]
+	reference_common <- na.omit(reference_common)
+  	de_reference_common=de_results[de_results$X %in% reference_common$common_name,]
+	print("common")
+
+	reference_not_common=mapping[grep(grid_t2t[x,2], mapping$combo),]
+	reference_not_common <- reference_not_common[!complete.cases(reference_not_common), ]
+  	de_reference_not_common=de_results[de_results$X %in% reference_not_common$common_name,]
+	print("not in common")
+
+  	# Annotate DE
+  	de_results$sig_status="notSignif"
+	de_results$sig_status[de_results$adj.P.Val < 0.05 ]="Signif"
+	de_results$direction[de_results$logFC < 0 ]="Old"
+	de_results$direction[de_results$logFC > 0 ]="New"
+	de_results$in_common=TRUE
+	print("DE clean")
+  	de_results$in_common[de_results$X %in% reference_not_common$common_name]=FALSE
+  	de_results$assembly=grid_t2t[x,3]
+	colnames(de_results)[1]="gene_id"
+	de_results_subset = de_results[,c("gene_id", "sig_status", "direction", "in_common", "assembly")]
+	print("combine")
+
+	# Merge T2T gene status via mapping
+	t2t_map=mapping[which(mapping$combo==grid_t2t[x,2]),]
+	t2t_final2=merge(t2t_final, t2t_map, by.x="gene_id", by.y="assembly_2_orginal_gene_name", all = T)
+	t2t_both=t2t_final2[,c("common_name", "status")]
+	t2t_both=unique(t2t_both)
+	colnames(t2t_both)=c("gene_id", "status")
+	both_status=merge(get(grid_t2t[x,5]), t2t_both, all = T)  # Merge with second GTF
+	both_status_new=merge(both_status, de_results_subset, by="gene_id", all = T)
+
+	print("done")
+	final_t2t[[x]] = both_status_new
 }
-combined_df_T2T = do.call(rbind, final_t2t)
 
-# Merge all
+combined_df_T2T <- do.call(rbind, final_t2t)  # Combine all T2T
+
+## Combine all information and clean for plotting
 all_info_ROSMAP = rbind(combined_df_non_T2T, combined_df_T2T)
-# filter complete cases for plotting
-df_clean = all_info_ROSMAP[complete.cases(all_info_ROSMAP[,c("in_common","assembly","direction","sig_status","status")]),]
-# build combined direction-status-in_common field
-all_info_ROSMAP = df_clean
-after_filter = with(all_info_ROSMAP,
-  data.frame(
-    direction_signif = ifelse(sig_status=="Signif", direction, "notSignif"),
-    in_common       = in_common,
-    assembly        = assembly,
-    status          = status,
-    stringsAsFactors=FALSE
-  )
-)
-all_info_ROSMAP = transform(all_info_ROSMAP,
-  for_plot = paste0(direction_signif, "_", in_common)
-)
-# set factor levels for plotting order
-all_info_ROSMAP$assembly = factor(all_info_ROSMAP$assembly,
-  levels = c(
-    "GRCh37-NCBI36","GRCh38.12-NCBI36","GRCh38.13-NCBI36","CHM13v2.0-NCBI36",
-    "GRCh38.12-GRCh37","GRCh38.13-GRCh37","CHM13v2.0-GRCh37",
-    "GRCh38.13-GRCh38.12","CHM13v2.0-GRCh38.12","CHM13v2.0-GRCh38.13"
-  )
-)
+df_clean <- all_info_ROSMAP[complete.cases(all_info_ROSMAP$in_common, all_info_ROSMAP$assembly, all_info_ROSMAP$direction, all_info_ROSMAP$sig_status), ]
+df_clean2 <- df_clean[complete.cases(df_clean$status), ]
+all_info_ROSMAP=df_clean2
+# Create combined direction_signif field
+all_info_ROSMAP$direction_signif="notSignif"
+all_info_ROSMAP$direction_signif[all_info_ROSMAP$sig_status=="Signif" & all_info_ROSMAP$direction== "New"]="New"
+all_info_ROSMAP$direction_signif[all_info_ROSMAP$sig_status=="Signif" & all_info_ROSMAP$direction== "Old"]="Old"
+# Prepare factor levels and plotting label\all_info_ROSMAP$for_plot=paste0(all_info_ROSMAP$direction_signif,"_", all_info_ROSMAP$in_common )
+all_info_ROSMAP$assembly <- factor(all_info_ROSMAP$assembly, levels = c("GRCh37-NCBI36", "GRCh38.12-NCBI36", "GRCh38.13-NCBI36", "CHM13v2.0-NCBI36", "GRCh38.12-GRCh37", "GRCh38.13-GRCh37", "CHM13v2.0-GRCh37", "GRCh38.13-GRCh38.12", "CHM13v2.0-GRCh38.12", "CHM13v2.0-GRCh38.13"))
 
-## Save final annotated data for downstream plotting or analysis
-saveRDS(all_info_ROSMAP, "with_coding_status_all_info_ROSMAP.RDS")
+## Save final data
+saveRDS(all_info_ROSMAP,"with_coding_status_all_info_ROSMAP.RDS" )
