@@ -1,8 +1,8 @@
 ## Clear workspace and load required libraries
 # Remove all objects from the current R environment
 rm(list=ls())
-# Load ggplot2 for plotting, data.table for fast file reading, tidyr for data reshaping,
-# GGally for ggpairs, and stringr for string manipulation
+
+#load libraries
 library(ggplot2)
 library(data.table)
 library(tidyr)
@@ -25,16 +25,16 @@ v43_T2T_DE=read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
 # GTF files
 hg18_gtf=fread("Homo_sapiens.NCBI36.53.gtf")        # Load hg18 GTF annotation
 hg19_gtf=fread("Homo_sapiens.GRCh37.70.gtf")        # Load hg19 GTF annotation
-v30_gtf <- fread("gencode.v30.primary_assembly.annotation.gtf")     # Load GRCh38 v30 GTF
-v43_gtf <- fread("gencode.v43.primary_assembly.annotation.gtf", data.table= FALSE)  # Load GRCh38 v43 GTF
-t2t_gtf <- fread("Homo_sapiens_GCA_009914755.4_2022_07_genes.gtf",  data.table = FALSE)  # Load T2T GTF
+v30_gtf=fread("gencode.v30.primary_assembly.annotation.gtf")     # Load GRCh38 v30 GTF
+v43_gtf=fread("gencode.v43.primary_assembly.annotation.gtf", data.table= FALSE)  # Load GRCh38 v43 GTF
+t2t_gtf=fread("Homo_sapiens_GCA_009914755.4_2022_07_genes.gtf",  data.table = FALSE)  # Load T2T GTF
 
 ### Mapping between assemblies for common gene names
 mapping=readRDS("rbind_map_between_assemblies_10.04.23.RDS")  # Precomputed mapping
 
 ## Pre-formatting per assembly
 
-# hg18: Parse GTF attributes and extract gene_id and status
+# hg18
 colnames(hg18_gtf)=c("genomic region","type","region","start","end","dot","strand","not_sure","V9")
 split_columns <- data.frame(do.call("rbind", strsplit(as.character(hg18_gtf$V9), ";",fixed = TRUE)))  # Split attributes on ;
 result_df <- cbind(hg18_gtf, split_columns)
@@ -47,7 +47,7 @@ colnames(hg18_final)=c("gene_id", "status")  # Rename columns
 hg18_final$status[hg18_final$status != "protein_coding"] <- "non_coding"  # Collapse non-coding statuses
 hg18_final=unique(hg18_final)  # Keep unique rows
 
-# hg19: Similar parsing but filter to exons and extract gene_type
+# hg19
 colnames(hg19_gtf)=c("genomic region","type","region","start","end","dot","strand","not_sure","V9")
 split_columns <- data.frame(do.call("rbind", strsplit(as.character(hg19_gtf$V9), ";",fixed = TRUE)))
 result_df <- cbind(hg19_gtf, split_columns)
@@ -60,7 +60,7 @@ hg19_df=unique(hg19_df)
 hg19_df$status[hg19_df$status != "protein_coding"] <- "non_coding"  # Collapse non-coding statuses
 hg19_final=unique(hg19_df)  # Unique rows
 
-# v30: Extract gene_type and gene_id using regex, filter exons
+# v30
 colnames(v30_gtf)=c("genomic region","type","region","start","end","dot","strand","not_sure","V9")
 result_df=v30_gtf[which(v30_gtf$region=="exon"),]  # Exon entries only
 result <- sub(".*gene_type\\s(.*?);.*", "\\1", result_df$V9)  # Pull gene_type field
@@ -73,7 +73,7 @@ colnames(result_df2)=c("gene_id", "status")
 result_df2$status[result_df2$status != "protein_coding"] <- "non_coding"
 v30_final=result_df2
 v30_final=unique(v30_final)
-v30_final$Geneid_noVersion=unlist(lapply(strsplit(as.character(v30_final$gene_id),".",fixed=TRUE),function(x){  # Strip version suffix if needed
+v30_final$Geneid_noVersion=unlist(lapply(strsplit(as.character(v30_final$gene_id),".",fixed=TRUE),function(x){ 
 		if(sum(grepl("_", x))==FALSE){
 			x[1]
 		}else{
@@ -83,7 +83,7 @@ v30_final$Geneid_noVersion=unlist(lapply(strsplit(as.character(v30_final$gene_id
 v30_final=v30_final[,c(3,2)]
 colnames(v30_final)=c("gene_id", "status")  # Final v30 table
 
-# v43: Same as v30 parsing
+# v43
 colnames(v43_gtf)=c("genomic region","type","region","start","end","dot","strand","not_sure","V9")
 v43=v43_gtf[which(v43_gtf$region=="exon"),]
 result <- sub(".*gene_type\\s(.*?);.*", "\\1", v43$V9)
@@ -106,7 +106,7 @@ v43_final$Geneid_noVersion=unlist(lapply(strsplit(as.character(v43_final$gene_id
 v43_final=v43_final[,c(3,2)]
 colnames(v43_final)=c("gene_id", "status")
 
-# t2t: Extract gene_biotype
+# t2t
 colnames(t2t_gtf)=c("genomic region","type","region","start","end","dot","strand","not_sure","V9")
 t2t=t2t_gtf[which(t2t_gtf$region=="exon"),]
 result <- sub(".*gene_biotype\\s(.*?);.*", "\\1", t2t$V9)
