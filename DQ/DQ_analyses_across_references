@@ -60,7 +60,7 @@ v30_path             <- fread("allcount_matrix_2023-04-11.txt")
 v43_path             <- fread("allcount_matrix_2023-04-11.txt")
 t2t_path             <- fread("allcount_matrix_2023-07-03.txt")
 map_path             <- fread("map_genename_T2T_ensembl_from_gtf.txt")
-all_var        <- fread("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/msbb/all_var.txt",sep = "\t", header = FALSE)
+all_var        <- fread("all_var.txt",sep = "\t", header = FALSE)
 
 #copy below to generate all_var file
 # structure(list(V1 = c("genedata_org_hg18", "genedata_org_hg18", 
