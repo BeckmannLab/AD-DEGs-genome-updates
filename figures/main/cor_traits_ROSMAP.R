@@ -3,7 +3,7 @@ library(variancePartition)
 library(CCP)
 
 # ==== Load and Filter Data ====
-infoall <- readRDS(file.path(data_dir, "info_hg18_2023-08-23.txt")) #see
+infoall <- readRDS(file.path(data_dir, "info_hg18_2023-08-23.txt")) 
 
 infoall2 <- infoall[, sapply(infoall, function(col) !is.factor(col) || nlevels(col) >= 2)]
 
