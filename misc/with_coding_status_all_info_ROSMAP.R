@@ -1,5 +1,4 @@
 ## Clear workspace and load required libraries
-# Remove all objects from the current R environment
 rm(list=ls())
 
 #load libraries
@@ -10,7 +9,6 @@ library(GGally)
 library(stringr)
 
 ## DE output - direct output from toptable
-# Read DE results for each assembly comparison into data.frames
 hg18_hg19_DE=read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
 hg18_v30_DE=read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
 hg19_v30_DE=read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
@@ -30,45 +28,45 @@ v43_gtf=fread("gencode.v43.primary_assembly.annotation.gtf", data.table= FALSE) 
 t2t_gtf=fread("Homo_sapiens_GCA_009914755.4_2022_07_genes.gtf",  data.table = FALSE)  # Load T2T GTF
 
 ### Mapping between assemblies for common gene names
-mapping=readRDS("rbind_map_between_assemblies_10.04.23.RDS")  # Precomputed mapping
+mapping=readRDS("rbind_map_between_assemblies_10.04.23.RDS") #see AD-DEGs-genome-updates/misc/rbind_map_between_assemblies_10.04.23.RDS
 
-## Pre-formatting per assembly
+## Pre-formatting
 
 # hg18
 colnames(hg18_gtf)=c("genomic region","type","region","start","end","dot","strand","not_sure","V9")
-split_columns <- data.frame(do.call("rbind", strsplit(as.character(hg18_gtf$V9), ";",fixed = TRUE)))  # Split attributes on ;
+split_columns <- data.frame(do.call("rbind", strsplit(as.character(hg18_gtf$V9), ";",fixed = TRUE))) 
 result_df <- cbind(hg18_gtf, split_columns)
-sub_hg18=result_df[,c("X1", "type")]   # Select gene_id field and type column
-hg18_df=data.frame(do.call("rbind", strsplit(as.character(sub_hg18$X1), " ",fixed = TRUE)))  # Split gene_id field on space
+sub_hg18=result_df[,c("X1", "type")]   
+hg18_df=data.frame(do.call("rbind", strsplit(as.character(sub_hg18$X1), " ",fixed = TRUE)))  
 result_df <- cbind(hg18_df,sub_hg18$type)
-result_df$X2 <- gsub('"', '', result_df$X2)   # Remove quotes around gene_id
+result_df$X2 <- gsub('"', '', result_df$X2)   
 hg18_final=result_df[,2:3]
-colnames(hg18_final)=c("gene_id", "status")  # Rename columns
-hg18_final$status[hg18_final$status != "protein_coding"] <- "non_coding"  # Collapse non-coding statuses
-hg18_final=unique(hg18_final)  # Keep unique rows
+colnames(hg18_final)=c("gene_id", "status")  
+hg18_final$status[hg18_final$status != "protein_coding"] <- "non_coding"  
+hg18_final=unique(hg18_final)  
 
 # hg19
 colnames(hg19_gtf)=c("genomic region","type","region","start","end","dot","strand","not_sure","V9")
 split_columns <- data.frame(do.call("rbind", strsplit(as.character(hg19_gtf$V9), ";",fixed = TRUE)))
 result_df <- cbind(hg19_gtf, split_columns)
-result_df=result_df[which(result_df$region=="exon"),]  # Keep only exon entries
-sub_hg19=result_df[,c("X1", "X5")]  # X1 contains gene_id, X5 contains gene_type
-sub_hg19$status <- str_replace_all(str_extract_all(sub_hg19$X5, '"([^"]+)"'), '"', '')  # Extract and clean gene_type
-sub_hg19$gene_id <- str_replace_all(str_extract_all(sub_hg19$X1, '"([^"]+)"'), '"', '')  # Extract and clean gene_id
-dag19_df=sub_hg19[,c("gene_id", "status")]  # Subset to relevant columns
+result_df=result_df[which(result_df$region=="exon"),]  
+sub_hg19=result_df[,c("X1", "X5")] 
+sub_hg19$status <- str_replace_all(str_extract_all(sub_hg19$X5, '"([^"]+)"'), '"', '') 
+sub_hg19$gene_id <- str_replace_all(str_extract_all(sub_hg19$X1, '"([^"]+)"'), '"', '')  
+dag19_df=sub_hg19[,c("gene_id", "status")] 
 hg19_df=unique(hg19_df)
-hg19_df$status[hg19_df$status != "protein_coding"] <- "non_coding"  # Collapse non-coding statuses
-hg19_final=unique(hg19_df)  # Unique rows
+hg19_df$status[hg19_df$status != "protein_coding"] <- "non_coding"  
+hg19_final=unique(hg19_df)  
 
 # v30
 colnames(v30_gtf)=c("genomic region","type","region","start","end","dot","strand","not_sure","V9")
-result_df=v30_gtf[which(v30_gtf$region=="exon"),]  # Exon entries only
-result <- sub(".*gene_type\\s(.*?);.*", "\\1", result_df$V9)  # Pull gene_type field
-result2 <- sub(".*gene_id\\s(.*?);.*", "\\1", result_df$V9)  # Pull gene_id field
+result_df=v30_gtf[which(v30_gtf$region=="exon"),] 
+result <- sub(".*gene_type\\s(.*?);.*", "\\1", result_df$V9)  
+result2 <- sub(".*gene_id\\s(.*?);.*", "\\1", result_df$V9)  
 result_df2 <- cbind(result2, result)
 result_df2 <- as.data.frame(result_df2)
-result_df2$result <- gsub('"', '', result_df2$result)  # Remove quotes
-result_df2$result2 <- gsub('"', '', result_df2$result2)  # Remove quotes
+result_df2$result <- gsub('"', '', result_df2$result) 
+result_df2$result2 <- gsub('"', '', result_df2$result2)  
 colnames(result_df2)=c("gene_id", "status")
 result_df2$status[result_df2$status != "protein_coding"] <- "non_coding"
 v30_final=result_df2
@@ -81,7 +79,7 @@ v30_final$Geneid_noVersion=unlist(lapply(strsplit(as.character(v30_final$gene_id
 			}
 		}))
 v30_final=v30_final[,c(3,2)]
-colnames(v30_final)=c("gene_id", "status")  # Final v30 table
+colnames(v30_final)=c("gene_id", "status") 
 
 # v43
 colnames(v43_gtf)=c("genomic region","type","region","start","end","dot","strand","not_sure","V9")
@@ -118,7 +116,7 @@ result_df$result2 <- gsub('"', '', result_df$result2)
 colnames(result_df)=c("gene_id", "status")
 result_df$status[result_df$status != "protein_coding"] <- "non_coding"
 t2t_final=result_df
-t2t_final=unique(t2t_final)  # Unique T2T status
+t2t_final=unique(t2t_final)  
 
 # Non-T2T comparison grids
 pairs = c("hg18_hg19","hg18_v30","hg19_v30","v30_v43","hg18_v43","hg19_v43")
@@ -131,7 +129,7 @@ grid = as.data.frame(cbind(de_output,pairs,combos,gtf_files1,gtf_files2))
 # Loop for non-T2T
 final_non_t2t <- vector("list", nrow(grid))
 for (x in seq_len(nrow(grid))){
-	print(x)  # Iteration index
+	print(x)  
 	# DE
 	de_results = get(grid[x,1])
 
@@ -155,7 +153,7 @@ for (x in seq_len(nrow(grid))){
 	de_results$in_common=TRUE
 	print("DE clean")
   	de_results$in_common[de_results$X %in% reference_not_common$common_name]=FALSE
-  	de_results$assembly=grid[x,3]  # Assembly combo label
+  	de_results$assembly=grid[x,3]  
 	colnames(de_results)[1]="gene_id"
 	de_results_subset = de_results[,c("gene_id", "sig_status", "direction", "in_common", "assembly")]
 	print("combine")
@@ -239,7 +237,7 @@ all_info_ROSMAP=df_clean2
 all_info_ROSMAP$direction_signif="notSignif"
 all_info_ROSMAP$direction_signif[all_info_ROSMAP$sig_status=="Signif" & all_info_ROSMAP$direction== "New"]="New"
 all_info_ROSMAP$direction_signif[all_info_ROSMAP$sig_status=="Signif" & all_info_ROSMAP$direction== "Old"]="Old"
-# Prepare factor levels and plotting label\all_info_ROSMAP$for_plot=paste0(all_info_ROSMAP$direction_signif,"_", all_info_ROSMAP$in_common )
+# Prepare factor levels and plotting
 all_info_ROSMAP$assembly <- factor(all_info_ROSMAP$assembly, levels = c("GRCh37-NCBI36", "GRCh38.12-NCBI36", "GRCh38.13-NCBI36", "CHM13v2.0-NCBI36", "GRCh38.12-GRCh37", "GRCh38.13-GRCh37", "CHM13v2.0-GRCh37", "GRCh38.13-GRCh38.12", "CHM13v2.0-GRCh38.12", "CHM13v2.0-GRCh38.13"))
 
 ## Save final data
