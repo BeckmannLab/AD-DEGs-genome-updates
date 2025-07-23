@@ -20,7 +20,7 @@ hg19_v43_DE=read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
 hg18_T2T_DE=read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
 hg19_T2T_DE=read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
 v30_T2T_DE=read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
-v43_T2T_DE=read.delim("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/Rosmap_combos/T2T_v43/DE/DE_assembly_corrected_for_id_assembly_test.txt")
+v43_T2T_DE=read.delim("DE_assembly_corrected_for_id_assembly_test.txt")
 
 # GTF files
 hg18_gtf=fread("Homo_sapiens.NCBI36.53.gtf")        # Load hg18 GTF annotation
