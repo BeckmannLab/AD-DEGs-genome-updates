@@ -1,6 +1,6 @@
 rm(list = ls())
 
-## Load libraries for data I/O, analysis, and parallel computing ##
+## Load libraries ##
 library(data.table)
 library(limma)
 library(edgeR)
@@ -11,7 +11,7 @@ library(assertthat)
 library(tidyverse)
 library(dplyr)
 
-## Define functions: batchtools, suffix, peek, duplication ##
+## Define functions ##
 MyBatchtoolsLSFParam <- function(..., registryargs = batchtoolsRegistryargs(),
                                   conf.file = path_to_conf_file) {
     if (missing(conf.file)) return(BatchtoolsParam(..., registryargs = registryargs))
@@ -35,10 +35,6 @@ add_decimal_numbers <- function(target_values, value_list) {
            paste0(value_list, ".", ave(seq_along(value_list), idx, FUN = seq_along)),
            value_list)
 }
-peek <- function(x, n = 6) {
-    if (is.null(dim(x))) head(x, n = n)
-    else x[1:min(n, nrow(x)), 1:min(n, ncol(x)), drop = FALSE]
-}
 duplicate_rows_based_on_count <- function(dataset, column_to_duplicate, count_dataset) {
     overlap <- intersect(dataset[[column_to_duplicate]], count_dataset[[column_to_duplicate]])
     counts <- table(count_dataset[[column_to_duplicate]][count_dataset[[column_to_duplicate]] %in% overlap])
@@ -57,26 +53,46 @@ duplicate_rows_based_on_count <- function(dataset, column_to_duplicate, count_da
     rbind(one_occ, dataset_dup, non_count)
 }
 
-# Covariate and sample ID inputs
-covariate_path       <- "info_all.RDS"
-ids_input_path       <- "voom_normalized_counts_allRin_allpmi_nomislabelled.RDS"
-
-# Metadata output
-ids_output_path      <- "ids_to_keep.RDS"
-info_output_path     <- "infoall_09.13.23.RDS"
-
 # Count matrix files per assembly
-hg18_path            <- "allcount_matrix_2023-04-11.txt"
-hg19_path            <- "allcount_matrix_2023-04-12.txt"
-v30_path             <- "allcount_matrix_2023-04-11.txt"
-v43_path             <- "allcount_matrix_2023-04-11.txt"
-t2t_path             <- "allcount_matrix_2023-07-03.txt"
-map_path             <- "map_genename_T2T_ensembl_from_gtf.txt"
-all_var_path         <- "/sc/arion/projects/mscic1/results/anina/fun_project_4.23/msbb/all_var.txt"
+hg18_path            <- fread("allcount_matrix_2023-04-11.txt")
+hg19_path            <- fread("allcount_matrix_2023-04-12.txt")
+v30_path             <- fread("allcount_matrix_2023-04-11.txt")
+v43_path             <- fread("allcount_matrix_2023-04-11.txt")
+t2t_path             <- fread("allcount_matrix_2023-07-03.txt")
+map_path             <- fread("map_genename_T2T_ensembl_from_gtf.txt")
+all_var        <- fread("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/msbb/all_var.txt",sep = "\t", header = FALSE)
+
+#copy below to generate all_var file
+# structure(list(V1 = c("genedata_org_hg18", "genedata_org_hg18", 
+# "genedata_org_hg18", "genedata_org_hg18", "genedata_org_hg19", 
+# "genedata_org_hg19", "genedata_org_hg19", "genedata_org_v30", 
+# "genedata_org_v30", "genedata_org_v43"), V2 = c("hg18", "hg18", 
+# "hg18", "hg18", "hg19", "hg19", "hg19", "v30", "v30", "v43"), 
+#     V3 = c("genedata_hg18", "genedata_hg18", "genedata_hg18", 
+#     "mod_genedata_hg18", "genedata_hg19", "genedata_hg19", "mod_genedata_hg19", 
+#     "genedata_v30", "mod_genedata_v30", "mod_genedata_v43"), 
+#     V4 = c("genedata_org_hg19", "genedata_org_v30", "genedata_org_v43", 
+#     "genedata_org_T2T", "genedata_org_v30", "genedata_org_v43", 
+#     "genedata_org_T2T", "genedata_org_v43", "genedata_org_T2T", 
+#     "genedata_org_T2T"), V5 = c("hg19", "v30", "v43", "T2T", 
+#     "v30", "v43", "T2T", "v43", "T2T", "T2T"), V6 = c("genedata_hg19", 
+#     "genedata_v30", "genedata_v43", "genedata_T2T", "genedata_v30", 
+#     "genedata_v43", "genedata_T2T", "genedata_v43", "genedata_T2T", 
+#     "genedata_T2T"), V7 = c("genedata_org_hg18_hg19", "genedata_org_hg18_v30", 
+#     "genedata_org_hg18_v43", "genedata_org_hg18_T2T", "genedata_org_hg19_v30", 
+#     "genedata_org_hg19_v43", "genedata_org_hg19_T2T", "genedata_org_v30_v43", 
+#     "genedata_org_v30_T2T", "genedata_org_v43_T2T"), V8 = c("hg19_hg18", 
+#     "v30_hg18", "v43_hg18", "T2T_hg18", "v30_hg19", "v43_hg19", 
+#     "T2T_hg19", "v30_v43", "T2T_v30", "T2T_v43"), V9 = c("info_all_hg18_hg19", 
+#     "info_all_hg18_v30", "info_all_hg18_v43", "info_all_hg18_T2T", 
+#     "info_all_hg19_v30", "info_all_hg19_v43", "info_all_hg19_T2T", 
+#     "info_all_v30_v43", "info_all_v30_T2T", "info_all_v43_T2T"
+#     )), row.names = c(NA, -10L), class = c("data.table", "data.frame"
+# ))
 
 ## Prepare covariate and sample ID files ##
-info_all_base <- readRDS(covariate_path)
-ids_to_keep   <- readRDS(ids_input_path)
+info_all_base <- readRDS("info_all.RDS") #meta info
+ids_to_keep   <- readRDS("ids_to_keep.RDS") #see AD-DEGs-genome-updates/files/ids_to_keep.RDS
 
 # Align and sort covariate data
 info_all_base <- info_all_base[match(colnames(ids_to_keep), make.names(info_all_base$sample)), ]
