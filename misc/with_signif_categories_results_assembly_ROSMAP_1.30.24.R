@@ -12,7 +12,7 @@ library(data.table)
 # Load mapping data
 # -----------------------------
 # mapping: combined mapping between genome assemblies
-mapping <- readRDS("rbind_map_between_assemblies_10.04.23.RDS") # find code to generate AD-DEGs-genome-updates/misc/rbind_map_between_assemblies_10.04.23.RDS
+mapping <- readRDS("rbind_map_between_assemblies_10.04.23.RDS") # see AD-DEGs-genome-updates/misc/rbind_map_between_assemblies_10.04.23.RDS
 
 # -----------------------------
 # Define phenotypes and assemblies
