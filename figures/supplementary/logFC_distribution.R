@@ -4,7 +4,7 @@ library(gridExtra)
 library(RColorBrewer)
 
 # === Paths ===
-data_path <- "with_signif_categories_results_assembly_MSBB_3.30.24.RDS"
+data_path <- "with_signif_categories_results_assembly_MSBB_3.30.24.RDS" #see AD-DEGs-genome-updates/misc/with_signif_categories_results_assembly_MSBB_3.30.24.R
 gene_map_path <- "gene_ids_ensembl2symbol_fromHUGO_10JUN2020.csv" #see AD-DEGs-genome-updates/files/gene_ids_ensembl2symbol_fromHUGO_10JUN2020.csv
 
 # === Load data and assign label ===
