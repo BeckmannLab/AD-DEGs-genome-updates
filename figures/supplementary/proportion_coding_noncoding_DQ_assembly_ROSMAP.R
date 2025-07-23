@@ -1,5 +1,5 @@
 # ==== Set Working Directories (Edit or Remove Before Publishing) ====
-input_rds <- file.path(data_dir, "with_coding_status_all_info_ROSMAP.RDS")
+input_rds <- file.path(data_dir, "with_coding_status_all_info_ROSMAP.RDS") #see AD-DEGs-genome-updates/misc/with_coding_status_all_info_ROSMAP.R
 # ==== Libraries ====
 library(ggplot2)
 library(dplyr)
