@@ -323,7 +323,7 @@ Plot_ReviGO_Modules <- function(name){
 
 
 ##run
-all_results=readRDS("MSBB_all_resultsDE_1.08.24.RDS") #AD-DEGs-genome-updates/misc/
+all_results=readRDS("MSBB_all_resultsDE_1.08.24.RDS") #AD-DEGs-genome-updates/misc/MSBB_all_resultsDE_1.08.24.RDS
 
 main_path="/allPathwaysMSBB/"
 system(paste("mkdir",main_path))
