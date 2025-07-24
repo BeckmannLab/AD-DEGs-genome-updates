@@ -145,7 +145,7 @@ for(ph in phenos) {
     pcol    <- paste0("adj.P.Val|", pfix, "_", asm)
 
     # default to "notSignif"
-    all_results[[out_col]] <- "NA"
+    all_results[[out_col]] <- NA
     all_results[[out_col]][
       !is.na(all_results[[pcol]]) &
         all_results[[pcol]] > 0.05
