@@ -323,22 +323,12 @@ library(dplyr)
 			info_all2$braaksc_simplified[as.numeric(as.character(info_all2$braaksc))>=3]="AD"
 			info_all2$braaksc_simplified=factor(info_all2$braaksc_simplified,levels=c("NL","AD"))
 
-			info_all2$ceradsc_simplified="NL"
-			info_all2$ceradsc_simplified[as.numeric(as.character(info_all2$ceradsc))<4]="AD"
-			info_all2$ceradsc_simplified=factor(info_all2$ceradsc_simplified,levels=c("NL","AD"))
-
 			info_all2$cogdx_simplified="NL"
 			info_all2$cogdx_simplified[as.numeric(as.character(info_all2$cogdx))>=4]="AD"
 			info_all2$cogdx_simplified[is.na(info_all2$cogdx)]=NA
 			info_all2$cogdx_simplified=factor(info_all2$cogdx_simplified,levels=c("NL","AD"))
 
-			info_all2$cogdx_defvsctl="MCI"
-			info_all2$cogdx_defvsctl[as.numeric(as.character(info_all2$cogdx))==1]="NL"
-			info_all2$cogdx_defvsctl[as.numeric(as.character(info_all2$cogdx))==4 | as.numeric(as.character(info_all2$cogdx))==5]="AD"
-			info_all2$cogdx_defvsctl[is.na(info_all2$cogdx)]=NA
-			info_all2$cogdx_defvsctl=factor(info_all2$cogdx_defvsctl,levels=c("NL","AD","MCI"))
-
-			disease_statuses=c("cts_mmse30_lv","braaksc_simplified","ceradsc_simplified","cogdx_simplified","ceradsc","cogdx_defvsctl")
+			disease_statuses=c("cts_mmse30_lv","braaksc_simplified","cogdx_simplified","ceradsc")
 
  			for (status in disease_statuses){
 
@@ -392,14 +382,10 @@ library(dplyr)
 		 # important
 		         if(status=="braaksc_simplified"){
 		            L = getContrast( vobjDreamSubset, formula_test, fullInfo2Subset, c("braaksc_simplifiedAD", "braaksc_simplifiedNL"))
-		        }else if(status=="ceradsc_simplified"){
-		            L = getContrast( vobjDreamSubset, formula_test, fullInfo2Subset, c("ceradsc_simplifiedAD", "ceradsc_simplifiedNL"))
 		        }else if(status=="cogdx_simplified"){
 		            L = getContrast( vobjDreamSubset, formula_test, fullInfo2Subset, c("cogdx_simplifiedAD", "cogdx_simplifiedNL"))
 		        }else if(status=="ceradsc"){
 		            L = getContrast( vobjDreamSubset, formula_test, fullInfo2Subset, c(paste0("ceradsc","1"), paste0("ceradsc","4")))
-		        }else if(status=="cogdx_defvsctl"){
-		            L = getContrast( vobjDreamSubset, formula_test, fullInfo2Subset, c("cogdx_defvsctlAD", "cogdx_defvsctlNL"))
 		        }
 		 # important
 
