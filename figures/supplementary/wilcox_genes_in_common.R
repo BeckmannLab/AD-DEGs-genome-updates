@@ -1,10 +1,10 @@
 library(ggplot2)
 
-matrixhg18 = readRDS("hg18_for_wilcox.RDS")
-matrixhg19 = readRDS("hg19_for_wilcox.RDS")
-matrixv30 = readRDS("v30_for_wilcox.RDS")
-matrixv43 = readRDS("v43_for_wilcox.RDS")
-matrixT2T = readRDS("T2T_for_wilcox.RDS")
+matrixhg18 = readRDS("hg18_for_wilcox.RDS") #see AD-DEGs-genome-updates/misc/ref_for_wilcox.R
+matrixhg19 = readRDS("hg19_for_wilcox.RDS") #see AD-DEGs-genome-updates/misc/ref_for_wilcox.R
+matrixv30 = readRDS("v30_for_wilcox.RDS") #see AD-DEGs-genome-updates/misc/ref_for_wilcox.R
+matrixv43 = readRDS("v43_for_wilcox.RDS") #see AD-DEGs-genome-updates/misc/ref_for_wilcox.R
+matrixT2T = readRDS("T2T_for_wilcox.RDS") #see AD-DEGs-genome-updates/misc/ref_for_wilcox.R
 
 
 mats <- list(hg18 = matrixhg18, hg19 = matrixhg19, v30 = matrixv30, v43 = matrixv43, T2T = matrixT2T)
