@@ -5,8 +5,6 @@ library(data.table)
 ############################
 ####DE AD results first
 ################################
-# Clear all objects from the workspace
-rm(list=ls())
 
 # Define file paths for differential expression results for each genome assembly
 path_hg18= #path to DE results
@@ -68,4 +66,83 @@ all_results_AD=merge(all_results_AD,v43,by="gene_id",all=TRUE)
 all_results_AD=merge(all_results_AD,T2T,by="gene_id",all=TRUE)
 all_results_AD=as.data.frame(all_results_AD)
 
-saveRDS(all_results_AD, "/sc/arion/projects/mscic1/results/anina/fun_project_4.23/analysis/msbb_all_resultsDE_5.02.24.RDS")
+# Reinitialize combinations for significance categorization
+assembliesComb = t(combn(assemblies,2))
+assembliesComb=cbind(assembliesComb,apply(assembliesComb,1,function(x){paste0(x[2],x[1])}))
+
+# Recreate grid for significance loop
+grid=expand.grid(assembliesComb[,3],phenos)
+grid$Var3=paste0(grid$Var1,"DE_",grid$Var2)
+grid$Var4=as.character(grid$Var2)
+# grid$Var4[grid$Var4=="ceradsc_defvsctl"]="ceradsc_test.txt"
+colnames(grid)=c("assemblies","pheno","assemblies_DE_pheno","pheno_fixed")
+colnames(assembliesComb)=c("assembly1","assembly2","assemblies")
+grid=merge(grid,assembliesComb,by="assemblies")
+
+# Copy merged results for analysis
+all_results = all_results_AD
+
+# Loop to categorize significance across assembly pairs for each phenotype
+for(i in 1:nrow(grid)){
+    # Define output column for this comparison
+    outCol=paste0(grid[i,"assembly2"],grid[i,"assembly1"],"DE_",grid[i,"pheno"])
+    # Identify adjusted p-value columns for each assembly
+    colOfInterest1=paste0("adj.P.Val|",grid[i,"pheno_fixed"],"_",grid[i,"assembly1"])
+    colOfInterest2=paste0("adj.P.Val|",grid[i,"pheno_fixed"],"_",grid[i,"assembly2"])
+    # Initialize output column
+    all_results[,outCol]=""
+
+    # Default label when both present but not significant
+    all_results[!is.na(all_results[,colOfInterest1]) & !is.na(all_results[,colOfInterest2]),outCol]="notSignif"
+
+    # Cases where one is NA and the other significant
+    all_results[which(is.na(all_results[, colOfInterest1]) & all_results[, colOfInterest2] <= 0.05), outCol] = paste0(grid[i,"assembly2"],"Signif")
+    all_results[which(is.na(all_results[,colOfInterest2]) & all_results[,colOfInterest1]<=0.05),outCol]=paste0(grid[i,"assembly1"],"Signif")
+
+    # Both significant
+    all_results[which(all_results[,colOfInterest1]<=0.05 & all_results[,colOfInterest2]<=0.05),outCol]="bothSignif"
+
+    # One significant, one not
+    all_results[which(all_results[,colOfInterest1]<=0.05 & all_results[,colOfInterest2]>0.05),outCol]=paste0(grid[i,"assembly1"],"Signif")
+    all_results[which(all_results[,colOfInterest1]>0.05 & all_results[,colOfInterest2]<=0.05),outCol]=paste0(grid[i,"assembly2"],"Signif")
+
+    # Cases where one is NA but not significant
+    all_results[which(is.na(all_results[,colOfInterest1]) & all_results[,colOfInterest2]>0.05),outCol]="notSignif"
+    all_results[which(is.na(all_results[,colOfInterest2]) & all_results[,colOfInterest1]>0.05),outCol]="notSignif"
+
+    # Replace empty strings with NA
+    all_results[all_results[,outCol]=="",outCol]=NA
+
+    # Set factor levels for categorization
+    all_results[,outCol]=factor(all_results[,outCol],levels=c(paste0(grid[i,"assembly1"],"Signif"),paste0(grid[i,"assembly2"],"Signif"),"bothSignif","notSignif"))
+}
+
+# Convert to data frame and save results
+all_results=as.data.frame(all_results)
+
+# which assemblies & phenos?
+assemblies <- c("hg18","hg19","v30","v43","T2T")
+phenos=c("CDR_simplified", "CERJ_defvsctl","PlaqueMean_test.txt")
+
+# map phenotype → column‐prefix
+prefix_map <- setNames(phenos, phenos)
+
+# loop
+for(ph in phenos) {
+  pfix <- prefix_map[ph]
+  for(asm in assemblies) {
+    out_col <- paste0(asm, "DE_", ph)
+    pcol    <- paste0("adj.P.Val|", pfix, "_", asm)
+
+    # default to "notSignif"
+    all_results[[out_col]] <- NA
+    all_results[[out_col]][
+      !is.na(all_results[[pcol]]) &
+        all_results[[pcol]] > 0.05
+    ] <- "notSignif"
+    # mark "Signif" where p <= 0.05
+    all_results[[out_col]][ all_results[[pcol]] <= 0.05 ] <- "Signif"
+  }
+}
+
+saveRDS(all_results, "msbb_all_resultsDE_5.02.24.RDS")
