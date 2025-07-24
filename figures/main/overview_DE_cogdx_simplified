@@ -1,0 +1,131 @@
+##Figure 3A
+# ---------------------------------
+# Load Input Data Tables
+# ---------------------------------
+combo_var <- read.delim(
+  "/sc/arion/projects/mscic1/results/anina/fun_project_4.23/combo_var.txt", header = F, sep = "\t")
+
+# structure(list(V1 = c("GRCh37/NCBI36", "GRCh38.p12/NCBI36", "GRCh38.p13/NCBI36", 
+# "CHM13v2.0/NCBI36", "GRCh38.p12/GRCh37", "GRCh38.p13/GRCh37", 
+# "CHM13v2.0/GRCh37", "GRCh38.p13/GRCh38.p12", "CHM13v2.0/GRCh38.p12", 
+# "CHM13v2.0/GRCh38.p13"), V2 = c("hg19_hg18", "v30_hg18", "v43_hg18", 
+# "T2T_hg18", "v30_hg19", "v43_hg19", "T2T_hg19", "v30_v43", "T2T_v30", 
+# "T2T_v43")), row.names = c(NA, -10L), class = "data.frame")
+
+overview <- read.delim("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/old_Rosmap_combos/overview_assemblyDE.txt",sep = "\t")
+
+# structure(list(assembly = c("NCBI36_GRCh37", "NCBI36_GRCh38.12", 
+# "NCBI36_GRCh38.13", "NCBI36_CHM13v2.0", "GRCh37_GRCh38.12", "GRCh37_GRCh38.13", 
+# "GRCh37_CHM13v2.0", "GRCh38.12_GRCh38.13", "GRCh38.12_CHM13v2.0", 
+# "GRCh38.13_CHM13v2.0"), genes = c(14627L, 14306L, 14284L, 14265L, 
+# 17476L, 17352L, 17082L, 19220L, 18595L, 18916L), non_DE = c(95L, 
+# 127L, 85L, 83L, 209L, 204L, 200L, 216L, 269L, 264L), DE = c(14532L, 
+# 14179L, 14199L, 14182L, 17267L, 17148L, 16882L, 19004L, 18326L, 
+# 18652L)), class = "data.frame", row.names = c(NA, -10L))
+
+all_results = readRDS("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/analysis/all_resultsDE_7.24.25.RDS") #see AD-DEGs-genome-updates/misc/all_resultsDE_7.24.25.R
+
+var = read.delim("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/analysis/var.txt", 
+  header = F, sep = "\t")
+# structure(list(V1 = c("hg18hg19DE_ceradsc_defvsctl", "hg18v30DE_ceradsc_defvsctl", 
+# "hg18v43DE_ceradsc_defvsctl", "hg19v30DE_ceradsc_defvsctl", "hg19v43DE_ceradsc_defvsctl", 
+# "v30v43DE_ceradsc_defvsctl", "T2Thg18DE_ceradsc_defvsctl", "T2Thg19DE_ceradsc_defvsctl", 
+# "T2Tv30DE_ceradsc_defvsctl", "T2Tv43DE_ceradsc_defvsctl"), V2 = c("hg18Signif", 
+# "hg18Signif", "hg18Signif", "hg19Signif", "hg19Signif", "v30Signif", 
+# "hg18Signif", "hg19Signif", "v30Signif", "v43Signif"), V3 = c("hg19Signif", 
+# "v30Signif", "v43Signif", "v30Signif", "v43Signif", "v43Signif", 
+# "T2TSignif", "T2TSignif", "T2TSignif", "T2TSignif")), class = "data.frame", row.names = c(NA, 
+# -10L))
+
+# -----------------------------
+# Load Required R Libraries
+# -----------------------------
+library(tidyr)    
+library(ggplot2)  
+library(GGally)  
+library(patchwork) 
+
+# -----------------------------------
+# Rename Assembly Comparisons
+# -----------------------------------
+combo_var[1,1]  = "GRCh37/NCBI36"
+combo_var[2,1]  = "GRCh38.p12/NCBI36"
+combo_var[3,1]  = "GRCh38.p13/NCBI36"
+combo_var[4,1]  = "CHM13v2.0/NCBI36"
+combo_var[5,1]  = "GRCh38.p12/GRCh37"
+combo_var[6,1]  = "GRCh38.p13/GRCh37"
+combo_var[7,1]  = "CHM13v2.0/GRCh37"
+combo_var[8,1]  = "GRCh38.p13/GRCh38.p12"
+combo_var[9,1]  = "CHM13v2.0/GRCh38.p12"
+combo_var[10,1] = "CHM13v2.0/GRCh38.p13"
+
+# --------------------------------
+# Prepare Data for Plotting
+# --------------------------------
+cogdx_simplified = all_results[, c(
+  "hg18DE_cogdx_simplified", 
+  "hg19DE_cogdx_simplified", 
+  "v30DE_cogdx_simplified", 
+  "v43DE_cogdx_simplified", 
+  "T2TDE_cogdx_simplified"
+)]
+
+data_long <- gather(
+  cogdx_simplified,
+  key   = "Category",
+  value = "Count",
+  na.rm = TRUE        # ← drop any rows where Count is NA
+)
+
+# -----------------------
+# Build the Plot
+# -----------------------
+a = ggplot(
+  data = data_long, 
+  mapping = aes(x = Category, fill = Count)
+) +
+  geom_bar(
+    stat     = "count",     # count number of entries per category/status
+    position = "stack"      # stack bars by Count groups
+  ) +
+  xlab("Reference") +
+  ylab("Genes Expressed") +
+  theme_minimal(base_size = 16) +  # minimalist theme with base font size
+  theme(
+    axis.text.x  = element_text(size = 20, hjust = 1, angle = 90),
+    axis.text.y  = element_text(size = 20),
+    axis.title.x = element_text(size = 22),
+    axis.title.y = element_text(size = 22),
+    legend.text  = element_text(size = 17),
+    legend.title = element_text(size = 18),
+    plot.title   = element_text(size = 20, face = "bold", hjust = 0.5)
+  ) +
+  scale_fill_manual(
+    values = c("grey", "darkgreen"),  # colors for FDR >0.05 and <=0.05
+    labels = expression("" > 0.05, "" <= 0.05)
+  ) +
+  labs(fill = 'FDR') +
+  # Add count labels above each bar
+  geom_text(
+    stat    = 'count',  # same stat as geom_bar
+    aes(label = ..count..), 
+    color   = "black", 
+    vjust   = -0.5,      # nudge text above bar
+    size    = 5          # text size
+  ) +
+  # Relabel x-axis ticks for clarity
+  scale_x_discrete(
+    labels = c(
+      "NCBI36", 
+      "GRCh37", 
+      "GRCh38.p12", 
+      "GRCh38.p13", 
+      "CHM13v2.0"
+    )
+  )
+
+# --------------------------------
+# Save Plot to Files
+# --------------------------------
+
+ggsave(a, filename    = paste0("overview_DE_cogdx_simplified.pdf"),useDingbats = FALSE)
