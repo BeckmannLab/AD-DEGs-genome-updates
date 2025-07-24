@@ -23,7 +23,7 @@ library(tidyr)
 library(stringr)
 
 
-df_all = readRDS("rosmap_ad_interaction_results_matrix.RDS") #see AD-DEGs-genome-updates/misc/MSBB_ad_interaction_results_matrix.R
+df_all = readRDS("rosmap_ad_interaction_results_matrix.RDS") #see AD-DEGs-genome-updates/misc/rosmap_ad_interaction_results_matrix.R
 
 #format
 df_all2 = df_all[,c("gene_symbol", "DEAD_status", "trait", "assembly_comparison")]
