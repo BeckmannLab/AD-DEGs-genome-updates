@@ -1,6 +1,9 @@
 
 #load library
 library(data.table)
+library(dplyr)
+library(tidyr)
+library(stringr)
 
 #function
 format_for_gsea = function(df){
@@ -20,10 +23,6 @@ format_for_gsea = function(df){
         new_df =na.omit(new_df)
         new_df
 }
-
-library(dplyr)
-library(tidyr)
-library(stringr)
 
 df_all = readRDS("MSBB_ad_interaction_results_matrix.RDS") #see AD-DEGs-genome-updates/misc/MSBB_ad_interaction_results_matrix.R
 
