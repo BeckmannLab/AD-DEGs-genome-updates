@@ -30,31 +30,31 @@ add_decimal_numbers <- function(target_values, value_list) {
 #wilcox plots
 #########################
 
-genedata_org_hg18=fread("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/RosmapHG18/expression/allcount_matrix_2023-04-11.txt", data.table=FALSE) 
+genedata_org_hg18=fread("allcount_matrix_2023-04-11.txt", data.table=FALSE) #counts
 rownames(genedata_org_hg18)=genedata_org_hg18$Geneid
 genedata_org_hg18$Geneid=NULL
 dim(genedata_org_hg18)
 
-genedata_org_hg19=fread("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/RosmapHG19/expression/allcount_matrix_2023-04-12.txt",data.table=FALSE)
+genedata_org_hg19=fread("allcount_matrix_2023-04-12.txt",data.table=FALSE) #counts
 rownames(genedata_org_hg19)=genedata_org_hg19$Geneid
 genedata_org_hg19$Geneid=NULL
 dim(genedata_org_hg19)
 
-genedata_org_v30=fread("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/Rosmapv30/expression/allcount_matrix_2023-04-11.txt", data.table=FALSE)
+genedata_org_v30=fread("allcount_matrix_2023-04-11.txt", data.table=FALSE) #counts
 rownames(genedata_org_v30)=genedata_org_v30$Geneid
 genedata_org_v30$Geneid=NULL
 dim(genedata_org_v30)
 
-genedata_org_v43=fread("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/Rosmapv43/expression/allcount_matrix_2023-04-11.txt", data.table= FALSE) 
+genedata_org_v43=fread("allcount_matrix_2023-04-11.txt", data.table= FALSE) #counts
 rownames(genedata_org_v43)=genedata_org_v43$Geneid
 genedata_org_v43$Geneid=NULL
 dim(genedata_org_v43)
 
-genedata_org_T2T=fread("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/RosmapT2T/expression/allcount_matrix_2023-07-03.txt", data.table = FALSE)
+genedata_org_T2T=fread("allcount_matrix_2023-07-03.txt", data.table = FALSE) #counts
 
-map <- fread("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/references/T2TCHM13v2.0/GCA_009914755.4/map_genename_T2T_ensembl_from_gtf.txt")
+map <- fread("map_genename_T2T_ensembl_from_gtf.txt") #see AD-DEGs-updates/files/map_genename_T2T_ensembl_from_gtf.txt
 
-assembly_map <- readRDS("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/analysis/rbind_map_between_assemblies_10.04.23.RDS")
+assembly_map <- readRDS("rbind_map_between_assemblies_10.04.23.RDS") #see AD-DEGs-updates/misc/rbind_map_between_assemblies_10.04.23.R
 
 
 v1 = c("genedata_org_hg18","genedata_org_hg19","genedata_org_v30","genedata_org_v43", "genedata_org_T2T")
