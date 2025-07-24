@@ -1,12 +1,11 @@
-
-
+#Figure 3B
 ## Clear the global environment
 rm(list = ls())
 
 library(ggplot2)
 library(data.table)
 ############################
-####DE AD results first
+####DE AD results
 ################################
 # Clear all objects from the workspace
 rm(list=ls())
