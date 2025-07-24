@@ -27,7 +27,7 @@ library(tidyr)
 library(stringr)
 
 #load in results
-df_all = readRDS("MSBB_ad_interaction_results_matrix.RDS") #see AD-DEGs-genome-updates
+df_all = readRDS("MSBB_ad_interaction_results_matrix.RDS") #see AD-DEGs-genome-updates/misc/MSBB_ad_interaction_results_matrix.R
 
 #format
 df_all2 = df_all[,c("gene_symbol", "DEAD_status", "trait", "assembly_comparison")]
