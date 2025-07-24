@@ -146,7 +146,6 @@ assembliesComb=cbind(assembliesComb,apply(assembliesComb,1,function(x){paste0(x[
 grid=expand.grid(assembliesComb[,3],phenos)
 grid$Var3=paste0(grid$Var1,"DE_",grid$Var2)
 grid$Var4=as.character(grid$Var2)
-grid$Var4[grid$Var4=="ceradsc_defvsctl"]="ceradsc_test.txt"
 colnames(grid)=c("assemblies","pheno","assemblies_DE_pheno","pheno_fixed")
 colnames(assembliesComb)=c("assembly1","assembly2","assemblies", "assembly_map")
 grid=merge(grid,assembliesComb,by="assemblies")
