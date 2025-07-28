@@ -18,16 +18,16 @@ cbPalette <- c("#F5793A", "#A95AA1", "#85C0F9", "#0F2080", "#999999")
 
 # Reformat assembly labels
 assembly_map <- c(
-  "GRCh37-NCBI36"           = "GRCh37/NCBI36",
-  "GRCh38.12-NCBI36"        = "GRCh38.p12/NCBI36",
-  "GRCh38.13-NCBI36"        = "GRCh38.p13/NCBI36",
-  "CHM13v2.0-NCBI36"        = "T2T-CHM13v2.0/NCBI36",
-  "GRCh38.12-GRCh37"        = "GRCh38.p12/GRCh37",
-  "GRCh38.13-GRCh37"        = "GRCh38.p13/GRCh37",
-  "CHM13v2.0-GRCh37"        = "T2T-CHM13v2.0/GRCh37",
-  "GRCh38.13-GRCh38.12"     = "GRCh38.p13/GRCh38.p12",
-  "CHM13v2.0-GRCh38.12"     = "T2T-CHM13v2.0/GRCh38.p12",
-  "CHM13v2.0-GRCh38.13"     = "T2T-CHM13v2.0/GRCh38.p13"
+  "GRCh37-NCBI36"           = "GRCh37-NCBI36",
+  "GRCh38.12-NCBI36"        = "GRCh38.p12-NCBI36",
+  "GRCh38.13-NCBI36"        = "GRCh38.p13-NCBI36",
+  "CHM13v2.0-NCBI36"        = "CHM13v2.0-NCBI36",
+  "GRCh38.12-GRCh37"        = "GRCh38.p12-GRCh37",
+  "GRCh38.13-GRCh37"        = "GRCh38.p13-GRCh37",
+  "CHM13v2.0-GRCh37"        = "CHM13v2.0-GRCh37",
+  "GRCh38.13-GRCh38.12"     = "GRCh38.p13-GRCh38.p12",
+  "CHM13v2.0-GRCh38.12"     = "CHM13v2.0-GRCh38.p12",
+  "CHM13v2.0-GRCh38.13"     = "CHM13v2.0-GRCh38.p13"
 )
 
 all_info_ROSMAP$assembly <- factor(
