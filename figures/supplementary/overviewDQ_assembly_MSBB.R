@@ -51,7 +51,7 @@ create_overview_plot <- function(df) {
       )
     ) +
     labs(
-      x    = "Reference Comparison",
+      x    = "References Compared",
       y    = "Genes Expressed",
       fill = "MSBB Differential Quantification"
     ) +
