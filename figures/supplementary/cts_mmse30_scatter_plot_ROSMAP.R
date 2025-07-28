@@ -225,8 +225,8 @@ g <- ggplot(plot_data, aes(x, y)) +
   ) +
   labs(
     title = "MMSE30",
-    x     = "LogFC older reference",
-    y     = "LogFC newer reference"
+    x     = "DE LogFC older reference",
+    y     = "DE LogFC newer reference"
   ) +
   theme_bw(base_size = 16) +
   theme(
