@@ -74,16 +74,16 @@ pairs <- data.frame(
             "v43","T2T",
             "T2T"),
   label = c(
-    "GRCh37/NCBI36",
-    "GRCh38.p12/NCBI36",
-    "GRCh38.p13/NCBI36",
-    "T2T-CHM13v2.0/NCBI36",
-    "GRCh38.p12/GRCh37",
-    "GRCh38.p13/GRCh37",
-    "CHM13v2.0/GRCh37",
-    "GRCh38.p13/GRCh38.p12",
-    "CHM13v2.0/GRCh38.p12",
-    "CHM13v2.0/GRCh38.p13"
+    "GRCh37-NCBI36",
+    "GRCh38.p12-NCBI36",
+    "GRCh38.p13-NCBI36",
+    "T2T-CHM13v2.0-NCBI36",
+    "GRCh38.p12-GRCh37",
+    "GRCh38.p13-GRCh37",
+    "CHM13v2.0-GRCh37",
+    "GRCh38.p13-GRCh38.p12",
+    "CHM13v2.0-GRCh38.p12",
+    "CHM13v2.0-GRCh38.p13"
   ),
   stringsAsFactors = FALSE
 )
@@ -106,16 +106,16 @@ results <- results[complete.cases(results), ]
 ## Plot -----------------------------------------------------------------------
 
 order_vec <- c(
-  "GRCh37/NCBI36",
-  "GRCh38.p12/NCBI36",
-  "GRCh38.p13/NCBI36",
-  "T2T-CHM13v2.0/NCBI36",
-  "GRCh38.p12/GRCh37",
-  "GRCh38.p13/GRCh37",
-  "CHM13v2.0/GRCh37",
-  "GRCh38.p13/GRCh38.p12",
-  "CHM13v2.0/GRCh38.p12",
-  "CHM13v2.0/GRCh38.p13"
+  "GRCh37-NCBI36",
+  "GRCh38.p12-NCBI36",
+  "GRCh38.p13-NCBI36",
+  "T2T-CHM13v2.0-NCBI36",
+  "GRCh38.p12-GRCh37",
+  "GRCh38.p13-GRCh37",
+  "CHM13v2.0-GRCh37",
+  "GRCh38.p13-GRCh38.p12",
+  "CHM13v2.0-GRCh38.p12",
+  "CHM13v2.0-GRCh38.p13"
 )
 results$assembly <- factor(results$assembly, levels = order_vec)
 
