@@ -1,7 +1,15 @@
 #Supplementary figure 5A
+# ==== Full Path to Save Directory (Edit or Remove Before Publishing) ====
+output_dir <- "/hpc/users/lunda02/www/plots/assembly_paper/assembly"
+
+# ==== Input & Output Filenames (relative to your working directory) ====
+input_rds_all    <- "with_signif_categories_results_assembly_MSBB_3.30.24.RDS" #AD-DEGs-genome-updates/misc/with_signif_categories_results_assembly_MSBB_3.30.24.RDS
+input_rds_msbb   <- "all_info_msbb.RDS" #AD-DEGs-genome-updates/misc/all_info_msbb.RDS
+output_pdf       <- file.path(output_dir, "overviewDQ_assembly_MSBB.pdf")
+
 # ==== Libraries ====
 library(ggplot2)
-
+library(dplyr)
 # ==== Functions for Data Preparation & Plotting ====
 
 # Function to set factor levels for differential-quantification categories
@@ -18,9 +26,9 @@ set_assembly_levels <- function(df) {
   df$assembly <- factor(
     df$assembly,
     levels = c(
-      "GRCh37-NCBI36", "GRCh38.12-NCBI36", "GRCh38.13-NCBI36", "CHM13v2.0-NCBI36",
-      "GRCh38.12-GRCh37", "GRCh38.13-GRCh37", "CHM13v2.0-GRCh37",
-      "GRCh38.13-GRCh38.12", "CHM13v2.0-GRCh38.12", "CHM13v2.0-GRCh38.13"
+      "GRCh37-NCBI36", "GRCh38.p12-NCBI36", "GRCh38.p13-NCBI36", "CHM13v2.0-NCBI36",
+      "GRCh38.p12-GRCh37", "GRCh38.p13-GRCh37", "CHM13v2.0-GRCh37",
+      "GRCh38.p13-GRCh38.p12", "CHM13v2.0-GRCh38.p12", "CHM13v2.0-GRCh38.p13"
     )
   )
   df
@@ -70,3 +78,36 @@ save_plot_no_dingbats <- function(plot_obj, filename, width = 10, height = 8) {
     useDingbats     = FALSE
   )
 }
+
+# # ==== Main Workflow ====
+
+# Load data
+all_info_MSBB    <- readRDS(input_rds_msbb)
+info_all_MSBB  <- readRDS(input_rds_msbb)
+
+#format
+all_info_MSBB$assembly = gsub("GRCh38.12-NCBI36","GRCh38.p12-NCBI36",all_info_MSBB$assembly)
+all_info_MSBB$assembly = gsub("GRCh38.12-GRCh37","GRCh38.p12-GRCh37",all_info_MSBB$assembly)
+all_info_MSBB$assembly = gsub("GRCh38.13-GRCh38.12","GRCh38.p13-GRCh38.p12",all_info_MSBB$assembly)
+all_info_MSBB$assembly = gsub("GRCh38.13-NCBI36","GRCh38.p13-NCBI36",all_info_MSBB$assembly)
+all_info_MSBB$assembly = gsub("GRCh38.13-GRCh37","GRCh38.p13-GRCh37",all_info_MSBB$assembly)
+all_info_MSBB$assembly = gsub("CHM13v2.0-GRCh38.12","CHM13v2.0-GRCh38.p12",all_info_MSBB$assembly)
+all_info_MSBB$assembly = gsub("CHM13v2.0-GRCh38.13","CHM13v2.0-GRCh38.p13",all_info_MSBB$assembly)
+
+info_all_MSBB$assembly = gsub("GRCh38.12-NCBI36","GRCh38.p12-NCBI36",info_all_MSBB$assembly)
+info_all_MSBB$assembly = gsub("GRCh38.12-GRCh37","GRCh38.p12-GRCh37",info_all_MSBB$assembly)
+info_all_MSBB$assembly = gsub("GRCh38.13-GRCh38.12","GRCh38.p13-GRCh38.p12",info_all_MSBB$assembly)
+info_all_MSBB$assembly = gsub("GRCh38.13-NCBI36","GRCh38.p13-NCBI36",info_all_MSBB$assembly)
+info_all_MSBB$assembly = gsub("GRCh38.13-GRCh37","GRCh38.p13-GRCh37",info_all_MSBB$assembly)
+info_all_MSBB$assembly = gsub("CHM13v2.0-GRCh38.12","CHM13v2.0-GRCh38.p12",info_all_MSBB$assembly)
+info_all_MSBB$assembly = gsub("CHM13v2.0-GRCh38.13","CHM13v2.0-GRCh38.p13",info_all_MSBB$assembly)
+
+
+# Prepare data for plotting
+info_all_MSBB <- info_all_MSBB %>%
+  set_for_plot_levels() %>%
+  set_assembly_levels()
+
+# Build and save the plot
+overview_plot <- create_overview_plot(info_all_MSBB)
+save_plot_no_dingbats(overview_plot, output_pdf)
