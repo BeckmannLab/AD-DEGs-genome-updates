@@ -96,15 +96,15 @@ plot_assembly_pair <- function(df, pattern, x_label, y_label, title) {
 # ==== Assembly Pairs ====
 assembly_pairs <- list(
   hg19_hg18 = c("hg19_hg18|hg19hg18", "NCBI36", "GRCh37"),
-  v30_hg18  = c("v30_hg18|v30hg18",  "NCBI36", "GRCh38.12"),
-  v43_hg18  = c("v43_hg18|v43hg18",  "NCBI36", "GRCh38.13"),
+  v30_hg18  = c("v30_hg18|v30hg18",  "NCBI36", "GRCh38.p12"),
+  v43_hg18  = c("v43_hg18|v43hg18",  "NCBI36", "GRCh38.p13"),
   T2T_hg18  = c("T2T_hg18|T2Thg18",  "NCBI36", "CHM13v2.0"),
-  v30_hg19  = c("v30_hg19|v30hg19",  "GRCh37", "GRCh38.12"),
-  v43_hg19  = c("v43_hg19|v43hg19",  "GRCh37", "GRCh38.13"),
+  v30_hg19  = c("v30_hg19|v30hg19",  "GRCh37", "GRCh38.p12"),
+  v43_hg19  = c("v43_hg19|v43hg19",  "GRCh37", "GRCh38.p13"),
   T2T_hg19  = c("T2T_hg19|T2Thg19",  "GRCh37", "CHM13v2.0"),
-  v43_v30   = c("v43_v30|v43v30",    "GRCh38.12", "GRCh38.13"),
-  T2T_v30   = c("T2T_v30|T2Tv30",    "GRCh38.12", "CHM13v2.0"),
-  T2T_v43   = c("T2T_v43|T2Tv43",    "GRCh38.13", "CHM13v2.0")
+  v43_v30   = c("v43_v30|v43v30",    "GRCh38.p12", "GRCh38.p13"),
+  T2T_v30   = c("T2T_v30|T2Tv30",    "GRCh38.p12", "CHM13v2.0"),
+  T2T_v43   = c("T2T_v43|T2Tv43",    "GRCh38.p13", "CHM13v2.0")
 )
 
 # ==== Generate and Save Individual Plots ====
