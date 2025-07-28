@@ -58,21 +58,21 @@ generate_plot <- function(data, title_text) {
                    by = assembly)) +
     geom_bar(position = "stack", stat = "prop") +
     theme_minimal(base_size = 16) +
-    labs(
-      x     = "Reference",
-      y     = "Proportion of Genes Expressed",
-      title = title_text
-    ) +
+    labs(title = title_text) +
     theme(
-      axis.text.x     = element_text(angle = 90, size = 16),
-      axis.text.y     = element_text(size = 16),
-      axis.title.x    = element_text(size = 18),
-      axis.title.y    = element_text(size = 18),
-      plot.title      = element_text(hjust = 0.5, size = 24),
-      legend.text     = element_text(size = 18),
-      legend.title    = element_blank(),
-      strip.text      = element_text(size = 18),
-      legend.position = "bottom"
+      axis.text.x       = element_text(angle = 90, size = 22,vjust = 0.5, hjust = 1),
+      axis.text.y       = element_text(size = 20),
+      axis.title.x      = element_text(size = 18),
+      axis.title.y      = element_text(size = 18),
+      plot.title        = element_text(hjust = 0.5, size = 24),
+      legend.text       = element_text(size = 18),
+      legend.title      = element_blank(),
+      # box around the entire legend
+      legend.background = element_rect(fill = "white", colour = "black", size = 1),
+      # no boxes around individual legend keys
+      legend.key        = element_rect(fill = NA, colour = NA),
+      strip.text        = element_text(size = 18),
+      legend.position   = "bottom"
     ) +
     scale_fill_manual(
       values = cbPalette,
