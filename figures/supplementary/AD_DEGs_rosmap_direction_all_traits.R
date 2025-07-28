@@ -262,7 +262,8 @@ g <- ggplot(overview_t, aes(x = assembly, y = value, fill = comparison)) +
   facet_wrap(
     ~ trait,
     ncol     = 3,
-    labeller = as_labeller(panel_titles)
+    labeller = as_labeller(panel_titles),
+    scales = "free_y"
   )
 
 ggsave(
