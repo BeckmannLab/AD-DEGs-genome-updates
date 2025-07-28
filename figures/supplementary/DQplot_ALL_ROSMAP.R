@@ -4,7 +4,7 @@
 # Adjust or remove these paths for publishing
 data_path <- "with_signif_categories_results_assembly_ROSMAP_1.30.24.RDS" #see AD-DEGs-genome-updates/misc/with_signif_categories_results_assembly_ROSMAP_1.30.24.RDS
 gene_map_path <- "gene_ids_ensembl2symbol_fromHUGO_10JUN2020.tsv" #AD-DEGs-genome-updates/files/gene_ids_ensembl2symbol_fromHUGO_10JUN2020.csv
-output_dir <- "/hpc/users/lunda02/www/plots/assembly_paper/assembly/"
+output_dir <- "/assembly/"
 output_pdf <- file.path(output_dir, "DQplot_ALL_ROSMAP.pdf")
 
 # ==== Libraries ====
