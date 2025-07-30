@@ -422,24 +422,26 @@ for(i in 1:nrow(grid2)){
     colOfInterest1.1=paste0("adj.P.Val|",phenos2[1,"pheno"],"_",grid2[i,"assembly2"],"_",grid2[i,"assembly1"])
     colOfInterest2.1=paste0("adj.P.Val|",phenos2[2,"pheno"],"_",grid2[i,"assembly2"],"_",grid2[i,"assembly1"])
     colOfInterest3.1=paste0("adj.P.Val|",phenos2[3,"pheno"],"_",grid2[i,"assembly2"],"_",grid2[i,"assembly1"])
-    colOfInterest4.1=paste0("adj.P.Val|",phenos2[4,"pheno"],"_",grid2[i,"assembly2"],"_",grid2[i,"assembly1"])
-    colOfInterest5.1=paste0("adj.P.Val|",phenos2[5,"pheno"],"_",grid2[i,"assembly2"],"_",grid2[i,"assembly1"])
-    colOfInterest6.1=paste0("adj.P.Val|",phenos2[6,"pheno"],"_",grid2[i,"assembly2"],"_",grid2[i,"assembly1"])
     colOfInterest1.2=paste0("logFC|",phenos2[1,"pheno"],"_",grid2[i,"assembly2"],"_",grid2[i,"assembly1"])
     colOfInterest2.2=paste0("logFC|",phenos2[2,"pheno"],"_",grid2[i,"assembly2"],"_",grid2[i,"assembly1"])
     colOfInterest3.2=paste0("logFC|",phenos2[3,"pheno"],"_",grid2[i,"assembly2"],"_",grid2[i,"assembly1"])
-    colOfInterest4.2=paste0("logFC|",phenos2[4,"pheno"],"_",grid2[i,"assembly2"],"_",grid2[i,"assembly1"])
-    colOfInterest5.2=paste0("logFC|",phenos2[5,"pheno"],"_",grid2[i,"assembly2"],"_",grid2[i,"assembly1"])
-    colOfInterest6.2=paste0("logFC|",phenos2[6,"pheno"],"_",grid2[i,"assembly2"],"_",grid2[i,"assembly1"])
 
     interaction_msbb[,outCol]=""
 
+    interaction_msbb[(!is.na(interaction_msbb[,colOfInterest1.1]) |
+                  !is.na(interaction_msbb[,colOfInterest2.1]) |
+                  !is.na(interaction_msbb[,colOfInterest3.1])),
+                 outCol] <- "notSignif"
 
-    interaction_msbb[(!is.na(interaction_msbb[,colOfInterest1.1]) | !is.na(interaction_msbb[,colOfInterest2.1]) | !is.na(interaction_msbb[,colOfInterest3.1]) | !is.na(interaction_msbb[,colOfInterest4.1]) | !is.na(interaction_msbb[,colOfInterest5.1]) | !is.na(interaction_msbb[,colOfInterest6.1])),outCol]="notSignif"
+    interaction_msbb[which((interaction_msbb[, colOfInterest1.1] < 0.05 & interaction_msbb[, colOfInterest1.2] > 0) |
+                       (interaction_msbb[, colOfInterest2.1] < 0.05 & interaction_msbb[, colOfInterest2.2] > 0) |
+                       (interaction_msbb[, colOfInterest3.1] < 0.05 & interaction_msbb[, colOfInterest3.2] > 0)),
+                 outCol] <- paste0(grid2[i, "assembly1"], "Signif")
 
-    interaction_msbb[which((interaction_msbb[, colOfInterest1.1] < 0.05 & interaction_msbb[, colOfInterest1.2] > 0) | (interaction_msbb[,colOfInterest2.1]<0.05 & interaction_msbb[,colOfInterest2.2]> 0)  | (interaction_msbb[,colOfInterest3.1]<0.05 & interaction_msbb[,colOfInterest3.2] > 0) | (interaction_msbb[,colOfInterest4.1]<0.05 & interaction_msbb[,colOfInterest4.2] > 0) | (interaction_msbb[,colOfInterest5.1]<0.05) & (interaction_msbb[,colOfInterest5.2]> 0 | interaction_msbb[,colOfInterest6.1]<0.05) & (interaction_msbb[,colOfInterest6.2] > 0)),outCol]=paste0(grid2[i,"assembly1"],"Signif")
-
-    interaction_msbb[which((interaction_msbb[, colOfInterest1.1] < 0.05 & interaction_msbb[, colOfInterest1.2] <= 0)| (interaction_msbb[,colOfInterest2.1]<0.05 & interaction_msbb[,colOfInterest2.2]<=0)  | (interaction_msbb[,colOfInterest3.1]<0.05 & interaction_msbb[,colOfInterest3.2]<=0) | (interaction_msbb[,colOfInterest4.1]<0.05 & interaction_msbb[,colOfInterest4.2]<=0) | (interaction_msbb[,colOfInterest5.1]<0.05 & interaction_msbb[,colOfInterest5.2]<=0) | (interaction_msbb[,colOfInterest6.1]<0.05 & interaction_msbb[,colOfInterest6.2]<=0)),outCol]=paste0(grid2[i,"assembly2"],"Signif")
+interaction_msbb[which((interaction_msbb[, colOfInterest1.1] < 0.05 & interaction_msbb[, colOfInterest1.2] <= 0) |
+                       (interaction_msbb[, colOfInterest2.1] < 0.05 & interaction_msbb[, colOfInterest2.2] <= 0) |
+                       (interaction_msbb[, colOfInterest3.1] < 0.05 & interaction_msbb[, colOfInterest3.2] <= 0)),
+                 outCol] <- paste0(grid2[i, "assembly2"], "Signif")
 
     interaction_msbb[interaction_msbb[,outCol]=="",outCol]=NA
 
