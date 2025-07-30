@@ -116,7 +116,7 @@ duplicate_rows_based_on_count <- function(dataset, column_to_duplicate, count_da
 
 	map <- fread("map_genename_T2T_ensembl_from_gtf.txt") #see AD-DEGs-genome-updates/files/map_genename_T2T_ensembl_from_gtf.txt
 
-	ids_to_keep=readRDS("ids_to_keep.RDS") #see AD-DEGs-genome-updates/files/ids_to_keep.R
+	ids_to_keep=readRDS("ids_to_keep.RDS") #see AD-DEGs-genome-updates/files/ids_to_keep.csv
 
 	info_all_base=readRDS("infoall_09.08.23.RDS") #meta info
 
