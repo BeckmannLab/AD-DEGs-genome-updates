@@ -7,11 +7,6 @@ library(org.Hs.eg.db)
 library(Rgraphviz)
 library(data.table)
 
-library("AnnotationDbi")
-library("GO.db")
-library("plyr")
-library("org.Mm.eg.db")
-
 
 
 annotate_GOterms_DE <- function(mel,sample_name,ensGene=TRUE,revigo=FALSE,GOFigure=FALSE,rrvgo=TRUE,gene.map=gene.map, useFDR=FALSE){
@@ -35,18 +30,6 @@ annotate_GOterms_DE <- function(mel,sample_name,ensGene=TRUE,revigo=FALSE,GOFigu
     library(rrvgo)
     library(Matrix.utils)
 
-    # load in the data set
-    #
-    #######################################################################################
-    #
-    # now carry out GO analysis
-    #
-    # read in analysis results above if needed
-    #
-
-    #pwf = nullp(a, 'hg19', 'geneSymbol')
-
-    #rename and output of file - don't want to override mel object 
     net = mel
     output.annotation.file = paste(sample_name,"_module_enrichments",".txt",sep="")
     
@@ -138,32 +121,6 @@ annotate_GOterms_DE <- function(mel,sample_name,ensGene=TRUE,revigo=FALSE,GOFigu
     res.fisher = getSigGroups(ips_CC, test.stat)   # doing Fisher statistics on GO graph
     res.final_CC = GenTable(ips_CC, classic = res.fisher, topNodes=length(ips_CC@graph@nodes))   # selecting top 200 of res.fisher
 
-    # ips = new("topGOdata", description = "Enrichment in mono cells", # creating GO element and graph
-    #                  ontology = c("BP", "MF", "CC", "KEGG"), 
-    #                  allGenes = as.factor(a), 
-    #                  geneSel = names(a[a==1]),
-    #                  nodeSize = 10,
-    #                  annot = annFUN.gene2GO,
-    #                  gene2GO = gene.map)
-
-    # test.stat = new("classicCount", testStatistic = GOFisherTest, name = "Fisher test") # creating element of class classic count
-    # res.fisher = getSigGroups(ips, test.stat)   # doing Fisher statistics on GO graph
-    # res.final = GenTable(ips, classic = res.fisher, topNodes=length(ips@graph@nodes))   # selecting top 200 of res.fisher
-
-    # gene.list=get_genes_in_signif_pathways_GO_ensembl(res.final[,"GO.ID"],gene.map)
-
-    res=cbind(rbind(res.final_BP,res.final_MF,res.final_CC))
-
-
-    # if (exists("res")){
-    #     res = rbind(res, cbind(res.final))
-    # }else{
-    #     res = cbind(res.final) # creating res table with 1st column module color and rest res.final
-    # }
-
-    #BH = benjamini-hochberg procedure - decreases FDR. avoid type 1 errors
-
-
     res.mod = cbind(res, res[,"Significant"]/res[,"Expected"],p.adjust(res[,"classic"],method="BH",n=number_of_GO))  # adding a column of ratio of significant over expected (fold enrichment)
     names(res.mod)[c(7,8)] = c("fold_enrichment","BH")
     res.mod = res.mod[,c( "GO.ID", "Term", "Annotated", "Significant", "Expected", "fold_enrichment", "classic","BH")]
@@ -216,7 +173,7 @@ annotate_GOterms_DE <- function(mel,sample_name,ensGene=TRUE,revigo=FALSE,GOFigu
             FN=paste(output.annotation.revigo,sep="")
             write.table(res.mod[res.mod[,"BH"] <=1,c('GO.ID','BH')], sep="\t",file=paste(FN,"/GOterms",sep=""),quote=F,col.names=F,row.names=F)
         }   
-    # for i in ~/minerva/coexpression_final/revigo/GOterms*; do echo $i;java -jar RevigoStandalone.jar $i --cutoff=0.7 --stdout >${i}_0.7;java -jar RevigoStandalone.jar $i --cutoff=0.1 --stdout >${i}_0.1; Rscript ~/minerva/scripts/Plot_ReviGO_Modules.R $i;done
+    # for i in ~/revigo/GOterms*; do echo $i;java -jar RevigoStandalone.jar $i --cutoff=0.7 --stdout >${i}_0.7;java -jar RevigoStandalone.jar $i --cutoff=0.1 --stdout >${i}_0.1; Rscript ~/Plot_ReviGO_Modules.R $i;done
         folder=getwd()
         system(paste("module unload java; module load java/1.8.0_66; cd ~/source/RevigoStandalone_2015-02-17_beta/; ","for i in ",folder,"/",output.annotation.revigo,"/GOterms*; do java -Xmx4000m -jar RevigoStandalone.jar $i --cutoff=0.7 --stdout >${i}_0.7; java -Xmx4000m -jar RevigoStandalone.jar $i --cutoff=0.1 --stdout >${i}_0.1; done",sep=""))
         if(length(which(res.mod[,"BH"]<1))>1){
@@ -235,9 +192,9 @@ annotate_GOterms_DE <- function(mel,sample_name,ensGene=TRUE,revigo=FALSE,GOFigu
             FN=paste(output.annotation.GOFigure,sep="")
             write.table(res.mod[res.mod[,var] <=0.05,c('GO.ID',var)], sep="\t",file=paste(FN,"/GOterms",sep=""),quote=F,col.names=F,row.names=F)
           folder=getwd()
-          system(paste0("ml python/3.7.3; python /GOFigure/GO-Figure/gofigure.py -i", folder,"/",output.annotation.GOFigure,"/GOterms -o ",folder,"/",output.annotation.GOFigure,"/ -w GOFigure_0.1 -si 0.1; python /sc/arion/projects/mscic1/data/GOFigure/GO-Figure/gofigure.py -i", folder,"/",output.annotation.GOFigure,"/GOterms -o ",folder,"/",output.annotation.GOFigure,"/ -w GOFigure_0.7 -si 0.7;"))
+          system(paste0("ml python/3.7.3; python /gofigure.py -i", folder,"/",output.annotation.GOFigure,"/GOterms -o ",folder,"/",output.annotation.GOFigure,"/ -w GOFigure_0.1 -si 0.1; python /gofigure.py -i", folder,"/",output.annotation.GOFigure,"/GOterms -o ",folder,"/",output.annotation.GOFigure,"/ -w GOFigure_0.7 -si 0.7;"))
         }
-        # python /GO-Figure/gofigure.py -i $folder/GOterms -o $folder/ -w GOFigure_0.1 -si 0.1
+        # python /sc/arion/projects/mscic1/data/GOFigure/GO-Figure/gofigure.py -i $folder/GOterms -o $folder/ -w GOFigure_0.1 -si 0.1
         # .1 AND .7 smaller and bigger group 
         if(length(which(res.mod[,var]<0.05))>1){
             name=paste("GOFigure",sep="")
@@ -267,19 +224,6 @@ Plot_GOFigure_Modules <- function(name,output.annotation.GOFigure){
     gofigure.7=rbind(gofigure.7,gofiguretmp.7)
   }
 
-  # gofigure1.1=fread(paste0(output.annotation.GOFigure,"/biological_process_full_table_",name,"_0.1.tsv"),data.table=FALSE)
-  # gofigure2.1=fread(paste0(output.annotation.GOFigure,"/cellular_component_full_table_",name,"_0.1.tsv"),data.table=FALSE)
-  # gofigure3.1=fread(paste0(output.annotation.GOFigure,"/molecular_function_full_table_",name,"_0.1.tsv"),data.table=FALSE)
-  # gofigure1.7=fread(paste0(output.annotation.GOFigure,"/biological_process_full_table_",name,"_0.7.tsv"),data.table=FALSE)
-  # gofigure2.7=fread(paste0(output.annotation.GOFigure,"/cellular_component_full_table_",name,"_0.7.tsv"),data.table=FALSE)
-  # gofigure3.7=fread(paste0(output.annotation.GOFigure,"/molecular_function_full_table_",name,"_0.7.tsv"),data.table=FALSE)
-  # gofigure.1=rbind(gofigure1.1,gofigure2.1,gofigure3.1)
-  # gofigure.7=rbind(gofigure1.7,gofigure2.7,gofigure3.7)
-
-  # name_tmp = strsplit(name,"_",fixed=T)[[1]]
-  # name = paste(name_tmp[length(name_tmp)-1],"-",name_tmp[length(name_tmp)])
-  # by default, outputs to a PDF file
-  #pdf( file=paste0(output.annotation.GOFigure,"/",name,"_GOFigure_TreeMap.pdf",sep=""), width=16, height=9 ) # width and height are in inches
 pdf(paste(main_path, "GOFigure_TreeMap_DE_AD.pdf", sep=""),width=16, height=9)
 
 
@@ -372,50 +316,168 @@ Plot_ReviGO_Modules <- function(name){
     dev.off()
     }
 
-##format
-format_for_gsea = function(df){
-    #######input for this is a two column dataframe where the first column are gene symbols and second column DE status which is either Signif or notSignif. if you want to do gene IDs you need to switch out. output is two column dataframe where first column is gene symbols second column is signif or not signif
-    library(assertthat)
-    new_df = data.frame(gene_symbol= unique(df$gene_symbol), sig = "notSignif") ##select the columns of interest and only keep unique genes
-    unique_DEGs = unique(df$gene_symbol[which(df$sig == "Signif")])
-    assert_that(identical(new_df$gene_symbol[match(unique_DEGs,new_df$gene_symbol)],unique_DEGs)) #make sure they match
+
+
+interaction_rosmap=readRDS("/results_interaction_ROSMAP_1.8.24.RDS") #see AD-DEGs-genome-updates/misc/results_interaction_ROSMAP_1.8.24.R
+
+mapping=readRDS("rbind_map_between_assemblies_10.04.23.RDS") #see AD-DEGs-genome-updates/misc/rbind_map_between_assemblies_10.04.23.R
+
+phenos=c("braaksc_simplified","ceradsc_defvsctl","cogdx_simplified","cts_mmse30")
+# assemblies=c("T2T","v43","v30","hg19","hg18")
+assemblies=c("hg18","hg19","v30","v43","T2T")
+
+assembliesComb = t(combn(assemblies,2))
+# assembliesComb2=assembliesComb[assembliesComb[,2]=="T2T",]
+# assembliesComb=assembliesComb[assembliesComb[,2]!="T2T",]
+assembliesComb=rbind(assembliesComb[,2:1],assembliesComb2[,2:1])
+assembliesComb=cbind(assembliesComb,apply(assembliesComb,1,function(x){paste0(x[1],x[2])}),apply(assembliesComb,1,function(x){paste0(x[1],"_",x[2])}))
+
+grid=expand.grid(assembliesComb[,3],phenos)
+grid$Var3=paste0(grid$Var1,"DE_",grid$Var2)
+grid$Var4=as.character(grid$Var2)
+grid$Var4[grid$Var4=="ceradsc_defvsctl"]="ceradsc_test.txt"
+colnames(grid)=c("assemblies","pheno","assemblies_DE_pheno","pheno_fixed")
+colnames(assembliesComb)=c("assembly1","assembly2","assemblies", "assembly_map")
+grid=merge(grid,assembliesComb,by="assemblies")
+
+for(i in 1:nrow(grid)){
+    outCol=paste0(grid[i,"assembly1"],grid[i,"assembly2"],"DE_",grid[i,"pheno"])
+    colOfInterest1=paste0("adj.P.Val|",grid[i,"pheno"],"_",grid[i,"assembly1"],"_",grid[i,"assembly2"])
+    colOfInterest2=paste0("logFC|",grid[i,"pheno"],"_",grid[i,"assembly1"],"_",grid[i,"assembly2"])
+    interaction_rosmap[,outCol]=""
+    interaction_rosmap[!is.na(interaction_rosmap[,colOfInterest1]),outCol]="notSignif"
+    # interaction_rosmap[which(interaction_rosmap[,colOfInterest1]<0.05 & interaction_rosmap[,colOfInterest2]>0.05),outCol]="bothSignif"
+    interaction_rosmap[which(interaction_rosmap[,colOfInterest1]<0.05 & interaction_rosmap[,colOfInterest2]> 0),outCol]=paste0(grid[i,"assembly1"],"Signif")
+    interaction_rosmap[which(interaction_rosmap[,colOfInterest1]<0.05 & interaction_rosmap[,colOfInterest2]<= 0),outCol]=paste0(grid[i,"assembly2"],"Signif")
+    interaction_rosmap[interaction_rosmap[,outCol]=="",outCol]=NA
+
+    interaction_rosmap[,outCol]=factor(interaction_rosmap[,outCol],levels=c(paste0(grid[i,"assembly1"],"Signif"),paste0(grid[i,"assembly2"],"Signif"),"notSignif"))
+
+    ##subset for ones in common
+    mapping_subset=mapping[mapping$combo==grid$assembly_map[i],] ##pick the right assembly combo 
+
+    mapping_subset2 = mapping_subset[rowSums(is.na(mapping_subset)) > 0, ] ##which ones have NA = not in common
+    interaction_rosmap[interaction_rosmap$gene_id %in% mapping_subset2$common_name,outCol]=NA ##NA means not in common
+
+    tmp_results=interaction_rosmap[,c("gene_id",grid[i,"assemblies_DE_pheno"])]
+    tmp_results=tmp_results[!is.na(tmp_results[,grid[i,"assemblies_DE_pheno"]]),]
+    gene.map = getgo(unlist(lapply(strsplit(unique(tmp_results$gene_id),".",fixed=TRUE),function(x){x[1]})),'hg19','ensGene') 
     
-    new_df$sig[match(unique_DEGs,new_df$gene_symbol)] = "Signif" #ones that are unique become unique in the df
-
-    assert_that(identical(sort(new_df$gene_symbol[new_df$sig=="Signif"]),sort(unique_DEGs)))
-    colnames(new_df) = c("gene_ID","DE")
-
-    ##remove empty rows 
-    new_df[which(new_df$gene_ID == ""),] = NA #remove symbols that dont match
-    new_df =na.omit(new_df)
-    new_df
+    name=paste0("interaction_",grid[i,"assembly1"],grid[i,"assembly2"],"_",grid[i,"assembly1"],"_",grid[i,"pheno"])
+    tmp_results$DE_status <- ifelse(tmp_results[,grid[i,"assemblies_DE_pheno"]] == paste0(grid[i,"assembly1"],"Signif"), 1, 0)
+    df=tmp_results[,c("gene_id", "DE_status")]
+    try(annotate_GOterms_DE(mel=df,sample_name=name,gene.map=gene.map,rrvgo=TRUE,revigo=FALSE,GOFigure=FALSE,useFDR=TRUE))
+    
+    name=paste0("interaction_",grid[i,"assembly1"],grid[i,"assembly2"],"_",grid[i,"assembly2"],"_",grid[i,"pheno"])
+    tmp_results$DE_status <- ifelse(tmp_results[,grid[i,"assemblies_DE_pheno"]] == paste0(grid[i,"assembly2"],"Signif"), 1, 0)
+    df=tmp_results[,c("gene_id", "DE_status")]
+    try(annotate_GOterms_DE(mel=df,sample_name=name,gene.map=gene.map,rrvgo=TRUE,revigo=FALSE,GOFigure=FALSE,useFDR=TRUE))
 }
 
+###for loading in 
+files=Sys.glob("*module_enrichments.txt")
+allGO=list()
+for(i in 1:length(files)){
+    cat("\r",i,"\t\t\t")
+    allGO[[files[i]]]=fread(files[i],data.table=FALSE)
+}
 
-df_all_rosmap = readRDS("rosmap_ad_interaction_results_matrix.RDS") #see AD-DEGs-genome-updates/misc/rosmap_ad_interaction_results_matrix.R
-common = df_all_rosmap[which(!is.na(df_all_rosmap$DE_AD_sign_same)),]
+signif=lapply(allGO,function(x){x[x[,"BH"]<20,]})
+signif=do.call("rbind",signif)
 
-traits = c("braaksc_simplified", "cogdx_simplified", "ceradsc_defvsctl","cts_mmse30" )
-pairs = c("hg19_hg18","v30_hg18","v30_hg18", "v43_hg18","T2T_hg18","v30_hg19", "v43_hg19", "T2T_hg19", "v43_v30", "T2T_v30", "T2T_v43")
-map <- fread("/gene_ids_ensembl2symbol_fromHUGO_10JUN2020.tsv")[,.(symbol=`Approved symbol`, gene=`Ensembl gene ID`)] #see AD-DEGs-genome-updates/files/gene_ids_ensembl2symbol_fromHUGO_10JUN2020.csv
+signif[order(signif$BH),]
 
-all = expand.grid(traits, pairs)
 
-main_path="/interaction_allPathways/"
+signif[order(signif$BH, decreasing = T),]
+##############
+##across all phenos 
+##############
+interaction_rosmap=readRDS("results_interaction_ROSMAP_1.8.24.RDS") #see AD-DEGs-genome-updates/misc/results_interaction_ROSMAP_1.8.24.R
 
+mapping=readRDS("rbind_map_between_assemblies_10.04.23.RDS") #see AD-DEGs-genome-updates/misc/rbind_map_between_assemblies_10.04.23.R
+
+main_path="/across_all_phenos/"
+system(paste("mkdir",main_path))
 setwd(main_path)
-####setup
-##make the files that are input_msbb
-for (i in 1:nrow(all)){
-    df_sig2 = common[which(common$trait == all[i,1]),]
-    df_sig3 = df_sig2[which(df_sig2$assembly_comparison == all[i,2]),]
-    for_gsea_df = format_for_gsea(data.frame(gene_symbol = df_sig3$gene_symbol, sig = df_sig3$interaction_status))
-    df = for_gsea_df
-    df$DE <- ifelse(df$DE == "Signif", 1, 0)
-    de2 = df[,c("gene_ID", "DE")]
-    gene.map = getgo(unlist(lapply(strsplit(unique(de2$gene_ID),".",fixed=TRUE),function(x){x[1]})),'hg19','geneSymbol') 
-    try(annotate_GOterms_DE(mel=de2,sample_name=name,gene.map=gene.map,rrvgo=TRUE,revigo=FALSE,GOFigure=FALSE,useFDR=TRUE))
+
+grid2=assembliesComb
+phenos2=data.frame(pheno=as.character(phenos))
+phenos2$pheno_fixed=as.character(phenos2$pheno)
+phenos2$pheno_fixed[phenos2$pheno=="ceradsc_defvsctl"]="ceradsc_test.txt"
+
+
+for(i in 1:nrow(grid2)){
+    outCol=paste0(grid2[i,"assembly1"],grid2[i,"assembly2"],"DE_allPhenos")
+    colOfInterest1.1=paste0("adj.P.Val|",phenos2[1,"pheno"],"_",grid2[i,"assembly1"],"_",grid2[i,"assembly2"])
+    colOfInterest2.1=paste0("adj.P.Val|",phenos2[2,"pheno"],"_",grid2[i,"assembly1"],"_",grid2[i,"assembly2"])
+    colOfInterest3.1=paste0("adj.P.Val|",phenos2[3,"pheno"],"_",grid2[i,"assembly1"],"_",grid2[i,"assembly2"])
+    colOfInterest4.1=paste0("adj.P.Val|",phenos2[4,"pheno"],"_",grid2[i,"assembly1"],"_",grid2[i,"assembly2"])
+    colOfInterest5.1=paste0("adj.P.Val|",phenos2[5,"pheno"],"_",grid2[i,"assembly1"],"_",grid2[i,"assembly2"])
+    colOfInterest6.1=paste0("adj.P.Val|",phenos2[6,"pheno"],"_",grid2[i,"assembly1"],"_",grid2[i,"assembly2"])
+    colOfInterest1.2=paste0("logFC|",phenos2[1,"pheno"],"_",grid2[i,"assembly1"],"_",grid2[i,"assembly2"])
+    colOfInterest2.2=paste0("logFC|",phenos2[2,"pheno"],"_",grid2[i,"assembly1"],"_",grid2[i,"assembly2"])
+    colOfInterest3.2=paste0("logFC|",phenos2[3,"pheno"],"_",grid2[i,"assembly1"],"_",grid2[i,"assembly2"])
+    colOfInterest4.2=paste0("logFC|",phenos2[4,"pheno"],"_",grid2[i,"assembly1"],"_",grid2[i,"assembly2"])
+    colOfInterest5.2=paste0("logFC|",phenos2[5,"pheno"],"_",grid2[i,"assembly1"],"_",grid2[i,"assembly2"])
+    colOfInterest6.2=paste0("logFC|",phenos2[6,"pheno"],"_",grid2[i,"assembly1"],"_",grid2[i,"assembly2"])
+
+    interaction_rosmap[,outCol]=""
+
+
+    interaction_rosmap[(!is.na(interaction_rosmap[,colOfInterest1.1]) | !is.na(interaction_rosmap[,colOfInterest2.1]) | !is.na(interaction_rosmap[,colOfInterest3.1]) | !is.na(interaction_rosmap[,colOfInterest4.1]) | !is.na(interaction_rosmap[,colOfInterest5.1]) | !is.na(interaction_rosmap[,colOfInterest6.1])),outCol]="notSignif"
+
+    interaction_rosmap[which((interaction_rosmap[, colOfInterest1.1] < 0.05 & interaction_rosmap[, colOfInterest1.2] > 0) | (interaction_rosmap[,colOfInterest2.1]<0.05 & interaction_rosmap[,colOfInterest2.2]> 0)  | (interaction_rosmap[,colOfInterest3.1]<0.05 & interaction_rosmap[,colOfInterest3.2] > 0) | (interaction_rosmap[,colOfInterest4.1]<0.05 & interaction_rosmap[,colOfInterest4.2] > 0) | (interaction_rosmap[,colOfInterest5.1]<0.05) & (interaction_rosmap[,colOfInterest5.2]> 0 | interaction_rosmap[,colOfInterest6.1]<0.05) & (interaction_rosmap[,colOfInterest6.2] > 0)),outCol]=paste0(grid2[i,"assembly1"],"Signif")
+
+    interaction_rosmap[which((interaction_rosmap[, colOfInterest1.1] < 0.05 & interaction_rosmap[, colOfInterest1.2] <= 0)| (interaction_rosmap[,colOfInterest2.1]<0.05 & interaction_rosmap[,colOfInterest2.2]<=0)  | (interaction_rosmap[,colOfInterest3.1]<0.05 & interaction_rosmap[,colOfInterest3.2]<=0) | (interaction_rosmap[,colOfInterest4.1]<0.05 & interaction_rosmap[,colOfInterest4.2]<=0) | (interaction_rosmap[,colOfInterest5.1]<0.05 & interaction_rosmap[,colOfInterest5.2]<=0) | (interaction_rosmap[,colOfInterest6.1]<0.05 & interaction_rosmap[,colOfInterest6.2]<=0)),outCol]=paste0(grid2[i,"assembly2"],"Signif")
+
+    interaction_rosmap[interaction_rosmap[,outCol]=="",outCol]=NA
+
+    grid2=as.data.frame(grid2)
+    mapping_subset=mapping[mapping$combo==grid2$assembly_map[i],]
+    mapping_subset=mapping_subset[which(is.na(mapping_subset),arr.ind=TRUE),]
+    interaction_rosmap[interaction_rosmap$gene_id %in% mapping_subset$common_name,outCol]=NA
+
+    interaction_rosmap[,outCol]=factor(interaction_rosmap[,outCol],levels=c(paste0(grid2[i,"assembly1"],"Signif"),paste0(grid2[i,"assembly2"],"Signif"),"notSignif"))
+
+
+    tmp_results=interaction_rosmap[,c("gene_id",outCol)]
+    tmp_results=tmp_results[!is.na(tmp_results[,outCol]),]
+    gene.map = getgo(unlist(lapply(strsplit(unique(tmp_results$gene_id),".",fixed=TRUE),function(x){x[1]})),'hg19','ensGene') 
+    
+    name=paste0("DE_AD_",grid2[i,"assembly1"],grid2[i,"assembly2"],"_",grid2[i,"assembly1"],"_allPhenos")
+    tmp_results$DE_status <- ifelse(tmp_results[,outCol] == paste0(grid2[i,"assembly1"],"Signif"), 1, 0)
+    df=tmp_results[,c("gene_id", "DE_status")]
+    try(annotate_GOterms_DE(mel=df,sample_name=name,gene.map=gene.map,rrvgo=TRUE,revigo=FALSE,GOFigure=FALSE,useFDR=TRUE))
+    
+    name=paste0("DE_AD_",grid2[i,"assembly1"],grid2[i,"assembly2"],"_",grid2[i,"assembly2"],"_allPhenos")
+    tmp_results$DE_status <- ifelse(tmp_results[,outCol] == paste0(grid2[i,"assembly2"],"Signif"), 1, 0)
+    df=tmp_results[,c("gene_id", "DE_status")]
+    try(annotate_GOterms_DE(mel=df,sample_name=name,gene.map=gene.map,rrvgo=TRUE,revigo=FALSE,GOFigure=FALSE,useFDR=TRUE))
 }
 
 
 
+###for loading in 
+files=Sys.glob("*module_enrichments.txt")
+allGO=list()
+for(i in 1:length(files)){
+    cat("\r",i,"\t\t\t")
+    allGO[[files[i]]]=fread(files[i],data.table=FALSE)
+}
+
+signif=lapply(allGO,function(x){x[x[,"BH"]<0.05,]})
+signif=do.call("rbind",signif)
+
+signif=signif[order(signif$BH),]
+
+signif2 = signif
+
+##looking at assembly name, etc
+signif$assembly_pairs=unlist(lapply(strsplit(rownames(signif),"_"),function(x){x[2]}))
+signif$assembly=unlist(lapply(strsplit(rownames(signif),"_"),function(x){x[3]}))
+signif$phenotype=unlist(lapply(strsplit(rownames(signif),"_"),function(x){paste(x[4],x[5],sep="_")}))
+
+
+saveRDS(signif, "signif_rosmap.RDS")
+
+path_sig=path_sig[order(path_sig$BH),]
