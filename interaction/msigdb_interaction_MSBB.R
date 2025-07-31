@@ -26,7 +26,7 @@ format_for_gsea = function(df){
 
 ###Load in 
 
-df_all_msbb = readRDS("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/analysis/MSBB_ad_interaction_results_matrix.RDS") #see AD-DEGs-genome-updates/misc/MSBB_ad_interaction_results_matrix.R
+df_all_msbb = readRDS("MSBB_ad_interaction_results_matrix.RDS") #see AD-DEGs-genome-updates/misc/MSBB_ad_interaction_results_matrix.R
 common = df_all_msbb[which(!is.na(df_all_msbb$DE_AD_sign_same)),]
 
 
@@ -41,11 +41,11 @@ for (x in unique(common$trait)){
 	for_gsea_df =unique(for_gsea_df)
 	subset_df2 = for_gsea_df$gene_ID
 	subset_df2 = as.data.frame(subset_df2)
-	write.table(subset_df2, paste0("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/enrichment/interaction_input_msbb/msbb_common_",x,"_", i, "_background_5.13.24.txt"), row.names = F, sep = ",")
+	write.table(subset_df2, paste0("msbb_common_",x,"_", i, "_background_5.13.24.txt"), row.names = F, sep = ",")
 	sig_subset_df = for_gsea_df[which(for_gsea_df$DE == "Signif"),]
 	sig_subset_df2 =sig_subset_df$gene_ID
 	sig_subset_df2 = as.data.frame(sig_subset_df2)
-	write.table(sig_subset_df2, paste0("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/enrichment/interaction_input_msbb/msbb_common_only_sig_",x,"_",i, "_5.13.24.txt"), row.names = F, sep = ",")
+	write.table(sig_subset_df2, paste0("msbb_common_only_sig_",x,"_",i, "_5.13.24.txt"), row.names = F, sep = ",")
 }
 }
 
@@ -53,12 +53,12 @@ for (x in unique(common$trait)){
 ##run enrichment for c1
 for (x in unique(common$trait)){
 	for (i in unique(common$assembly_comparison)){
-	var1=paste0("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/enrichment/interaction_input_msbb/msbb_common_only_sig_",x,"_",i, "_5.13.24.txt")
-	var2=paste0("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/enrichment/interaction_input_msbb/msbb_common_",x,"_", i, "_background_5.13.24.txt")
-	var3="/sc/arion/projects/mscic1/results/anina/fun_project_4.23/analysis/msig/files_to_run/c1.all.v2023.2.Hs.symbols.gmt" #from msigdb website C1 curated gene sets  https://www.gsea-msigdb.org/gsea/msigdb/collections.jsp
-	var4="/sc/arion/projects/mscic1/results/anina/fun_project_4.23/enrichment/interaction_output_msbb/c1/"
+	var1=paste0("msbb_common_only_sig_",x,"_",i, "_5.13.24.txt")
+	var2=paste0("msbb_common_",x,"_", i, "_background_5.13.24.txt")
+	var3="c1.all.v2023.2.Hs.symbols.gmt" #from msigdb website C1 curated gene sets  https://www.gsea-msigdb.org/gsea/msigdb/collections.jsp
+	var4="/c1/"
 	var5=paste0(x,"_", i, "msigdb")
-	system(paste("python /sc/arion/projects/mscic1/results/anina/functions/enrich_function.py",var1, var2, var3, var4, var5)) ##see AD-DEGs-genome-updates/misc/enrich_function.py
+	system(paste("python enrich_function.py",var1, var2, var3, var4, var5)) ##see AD-DEGs-genome-updates/misc/enrich_function.py
 }
 }
 
@@ -66,8 +66,8 @@ for (x in unique(common$trait)){
 
 library(data.table)
 
-path="/sc/arion/projects/mscic1/results/anina/fun_project_4.23/enrichment/interaction_output_msbb/c1/"
-output_files=list.files("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/enrichment/interaction_output_msbb/c1/")
+path="c1/"
+output_files=list.files("c1/")
 all=data.table()
     for(x in output_files){
         tmp=fread(paste0(path,x))
@@ -77,4 +77,4 @@ all=data.table()
 
 all = all[order(all$`Adjusted P-value`, decreasing = F),]
 
-saveRDS(all,"/sc/arion/projects/mscic1/results/anina/fun_project_4.23/enrichment/interaction_output_msbb/msbb_c1_msigdb.RDS")
+saveRDS(all,"msbb_c1_msigdb.RDS")
