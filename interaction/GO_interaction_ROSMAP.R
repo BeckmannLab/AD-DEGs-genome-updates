@@ -1,4 +1,4 @@
-# Load required libraries
+# Load libraries
 library(ggplot2)
 options(stringsAsFactors = FALSE)
 library("R.matlab")
@@ -7,6 +7,148 @@ library(topGO)
 library(org.Hs.eg.db)
 library(Rgraphviz)
 library(data.table)
+
+# GO enrichment function
+annotate_GOterms_DE <- function(mel, sample_name, ensGene = TRUE, revigo = FALSE, GOFigure = FALSE, rrvgo = TRUE, gene.map = gene.map, useFDR = FALSE) {
+  options(stringsAsFactors = FALSE)
+  library(rrvgo)
+  library(Matrix.utils)
+
+  net <- mel
+  output.annotation.file <- paste0(sample_name, "_module_enrichments.txt")
+
+  # Create output directories
+  if (revigo) {
+    output.annotation.revigo <- paste0(sample_name, "_revigo")
+    if (dir.exists(output.annotation.revigo)) system(paste("rm -rf", output.annotation.revigo))
+    dir.create(output.annotation.revigo)
+  }
+  if (GOFigure) {
+    output.annotation.GOFigure <- paste0(sample_name, "_GOFigure")
+    if (dir.exists(output.annotation.GOFigure)) system(paste("rm -rf", output.annotation.GOFigure))
+    dir.create(output.annotation.GOFigure)
+  }
+  if (rrvgo) {
+    output.annotation.rrvgo <- paste0(sample_name, "_rrvgo")
+    if (dir.exists(output.annotation.rrvgo)) system(paste("rm -rf", output.annotation.rrvgo))
+    dir.create(output.annotation.rrvgo)
+  }
+
+  # Get GO term annotations if not provided
+  if (is.null(gene.map)) {
+    gene.map <- if (ensGene) getgo(net[, 1], 'hg19', 'ensGene') else getgo(net[, 1], 'hg19', 'geneSymbol')
+  }
+  gene.map <- gene.map[!is.na(names(gene.map))]
+  number_of_GO <- length(unique(unlist(gene.map)))
+
+  x <- net[, 1]
+  a <- rep(0, length(x))
+  names(a) <- x
+  a[net[, 2] == 1] <- 1
+
+  # Run enrichment for BP, MF, and CC
+  res.final_BP <- GenTable(new("topGOdata", description = "BP", ontology = "BP", allGenes = as.factor(a),
+                               geneSel = names(a[a == 1]), nodeSize = 10, annot = annFUN.gene2GO, gene2GO = gene.map),
+                           classic = getSigGroups(new("topGOdata", ontology = "BP", allGenes = as.factor(a),
+                                                      geneSel = names(a[a == 1]), nodeSize = 10,
+                                                      annot = annFUN.gene2GO, gene2GO = gene.map),
+                                                  new("classicCount", testStatistic = GOFisherTest, name = "Fisher test")),
+                           topNodes = length(gene.map))
+
+  res.final_MF <- GenTable(new("topGOdata", description = "MF", ontology = "MF", allGenes = as.factor(a),
+                               geneSel = names(a[a == 1]), nodeSize = 10, annot = annFUN.gene2GO, gene2GO = gene.map),
+                           classic = getSigGroups(new("topGOdata", ontology = "MF", allGenes = as.factor(a),
+                                                      geneSel = names(a[a == 1]), nodeSize = 10,
+                                                      annot = annFUN.gene2GO, gene2GO = gene.map),
+                                                  new("classicCount", testStatistic = GOFisherTest, name = "Fisher test")),
+                           topNodes = length(gene.map))
+
+  res.final_CC <- GenTable(new("topGOdata", description = "CC", ontology = "CC", allGenes = as.factor(a),
+                               geneSel = names(a[a == 1]), nodeSize = 10, annot = annFUN.gene2GO, gene2GO = gene.map),
+                           classic = getSigGroups(new("topGOdata", ontology = "CC", allGenes = as.factor(a),
+                                                      geneSel = names(a[a == 1]), nodeSize = 10,
+                                                      annot = annFUN.gene2GO, gene2GO = gene.map),
+                                                  new("classicCount", testStatistic = GOFisherTest, name = "Fisher test")),
+                           topNodes = length(gene.map))
+
+  # Combine all results
+  res <- rbind(res.final_BP, res.final_MF, res.final_CC)
+
+  # Compute fold enrichment and FDR
+  res.mod <- cbind(res, res[, "Significant"] / res[, "Expected"],
+                   p.adjust(res[, "classic"], method = "BH", n = number_of_GO))
+  names(res.mod)[c(7, 8)] <- c("fold_enrichment", "BH")
+  res.mod <- res.mod[, c("GO.ID", "Term", "Annotated", "Significant", "Expected", "fold_enrichment", "classic", "BH")]
+  write.table(res.mod, output.annotation.file, sep = "\t", quote = FALSE, row.names = FALSE)
+
+  var <- if (useFDR) "BH" else "classic"
+
+  # RRVGO visualization
+  if (rrvgo) {
+    res.mod[is.na(res.mod[, var]), var] <- 1e-300
+    tmp <- res.mod[res.mod[, var] <= 0.05, c("GO.ID", var)]
+    go_analysis <- tmp
+    simMatrix_BP <- calculateSimMatrix(go_analysis$GO.ID, orgdb = "org.Hs.eg.db", ont = "BP", method = "Rel")
+    simMatrix_MF <- calculateSimMatrix(go_analysis$GO.ID, orgdb = "org.Hs.eg.db", ont = "MF", method = "Rel")
+    simMatrix_CC <- calculateSimMatrix(go_analysis$GO.ID, orgdb = "org.Hs.eg.db", ont = "CC", method = "Rel")
+    combo_simMat <- rBind.fill(simMatrix_MF, simMatrix_CC)
+    combo_all <- rBind.fill(combo_simMat, simMatrix_BP)
+    scores <- setNames(-log10(as.numeric(go_analysis[, var])), go_analysis$GO.ID)
+    reducedTerms <- reduceSimMatrix(combo_all, scores, threshold = 0.7, orgdb = "org.Hs.eg.db")
+
+    pdf(paste0(output.annotation.rrvgo, "/treemap_output.annotation_DE_AD.pdf"))
+    scatterPlot(combo_all, reducedTerms)
+    wordcloudPlot(reducedTerms, min.freq = 1, colors = "black")
+    heatmapPlot(combo_all, reducedTerms, annotateParent = TRUE, annotationLabel = "parentTerm", fontsize = 6)
+    treemapPlot(reducedTerms)
+    dev.off()
+  }
+
+  # REVIGO (if enabled)
+  if (revigo) {
+    res.mod[is.na(res.mod[, "BH"]), "BH"] <- 0
+    tmp <- res.mod[res.mod[, "BH"] <= 1, c("GO.ID", "BH")]
+    if (nrow(tmp) > 0) {
+      FN <- output.annotation.revigo
+      write.table(tmp, file = paste0(FN, "/GOterms"), sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+    }
+
+    folder <- getwd()
+    system(paste("module unload java; module load java/1.8.0_66; cd ~/source/RevigoStandalone_2015-02-17_beta/;",
+                 "for i in ", folder, "/", output.annotation.revigo, "/GOterms*; do ",
+                 "java -Xmx4000m -jar RevigoStandalone.jar $i --cutoff=0.7 --stdout >${i}_0.7;",
+                 "java -Xmx4000m -jar RevigoStandalone.jar $i --cutoff=0.1 --stdout >${i}_0.1; done", sep = ""))
+
+    if (length(which(res.mod[, "BH"] < 1)) > 1) {
+      name <- paste0(output.annotation.revigo, "/GOterms")
+      Plot_ReviGO_Modules(name)
+    }
+
+    unlink(paste(folder, "/", output.annotation.revigo, "/*_0.1", sep = ""))
+    unlink(paste(folder, "/", output.annotation.revigo, "/*_0.7", sep = ""))
+  }
+
+  # GOFigure (if enabled)
+  if (GOFigure) {
+    res.mod[is.na(res.mod[, var]), var] <- 1e-300
+    tmp <- res.mod[res.mod[, var] <= 0.05, c("GO.ID", var)]
+    if (nrow(tmp) > 0) {
+      FN <- output.annotation.GOFigure
+      write.table(tmp, file = paste0(FN, "/GOterms"), sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+      folder <- getwd()
+      system(paste0("ml python/3.7.3; ",
+                    "python gofigure.py -i", folder, "/", FN, "/GOterms -o ", folder, "/", FN, "/ -w GOFigure_0.1 -si 0.1; ",
+                    "python gofigure.py -i", folder, "/", FN, "/GOterms -o ", folder, "/", FN, "/ -w GOFigure_0.7 -si 0.7;"))
+    }
+
+    if (length(which(res.mod[, var] < 0.05)) > 1) {
+      name <- "GOFigure"
+      Plot_GOFigure_Modules(name, output.annotation.GOFigure)
+      unlink(paste(folder, "/", output.annotation.GOFigure, "/GOFigure_0.1", sep = ""))
+      unlink(paste(folder, "/", output.annotation.GOFigure, "/GOFigure_0.7", sep = ""))
+    }
+  }
+}
 
 # -------------------------------------
 # Load data and define parameters
