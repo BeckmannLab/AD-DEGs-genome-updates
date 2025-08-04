@@ -40,11 +40,11 @@ for (i in unique(common$assembly_comparison)){
 	for_gsea_df =unique(for_gsea_df)
 	subset_df2 = for_gsea_df$gene_ID
 	subset_df2 = as.data.frame(subset_df2)
-	write.table(subset_df2, paste0("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/enrichment/interaction_input_msbb/msbb_common_",i, "_background_5.13.24.txt"), row.names = F, sep = ",")
+	write.table(subset_df2, paste0("msbb_common_",i, "_background_5.13.24.txt"), row.names = F, sep = ",")
 	sig_subset_df = for_gsea_df[which(for_gsea_df$DE == "Signif"),]
 	sig_subset_df2 =sig_subset_df$gene_ID
 	sig_subset_df2 = as.data.frame(sig_subset_df2)
-	write.table(sig_subset_df2, paste0("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/enrichment/interaction_input_msbb/msbb_common_only_sig_",i, "_5.13.24.txt"), row.names = F, sep = ",")
+	write.table(sig_subset_df2, paste0("msbb_common_only_sig_",i, "_5.13.24.txt"), row.names = F, sep = ",")
 }
 
 
