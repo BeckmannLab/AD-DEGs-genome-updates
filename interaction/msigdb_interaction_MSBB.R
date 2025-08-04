@@ -27,7 +27,6 @@ format_for_gsea = function(df){
 ###Load in 
 
 df_all_msbb = readRDS("MSBB_ad_interaction_results_matrix.RDS") #see AD-DEGs-genome-updates/misc/MSBB_ad_interaction_results_matrix.R
-df_all_msbb = df_all_msbb[df_all_msbb$trait %in% c("CDR_simplified", "CERJ_defvsctl", "PlaqueMean"),]
 common = df_all_msbb[which(!is.na(df_all_msbb$DE_AD_sign_same)),]
 common2= common[common$DEAD_status != "notSignif",]
 
