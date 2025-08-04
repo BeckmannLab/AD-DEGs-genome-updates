@@ -27,34 +27,32 @@ format_for_gsea = function(df){
 ###Load in 
 
 df_all_msbb = readRDS("MSBB_ad_interaction_results_matrix.RDS") #see AD-DEGs-genome-updates/misc/MSBB_ad_interaction_results_matrix.R
+df_all_msbb = df_all_msbb[df_all_msbb$trait %in% c("CDR_simplified", "CERJ_defvsctl", "PlaqueMean"),]
 common = df_all_msbb[which(!is.na(df_all_msbb$DE_AD_sign_same)),]
+common2= common[common$DEAD_status != "notSignif",]
 
 
 ##make the files that are input_msbb
-for (x in unique(common$trait)){
-	print(x)
-	for (i in unique(common$assembly_comparison)){
+for (i in unique(common$assembly_comparison)){
 	print(i)
-	df_sig2 = common[which(common$trait == x),]
-	df_sig3 = df_sig2[which(df_sig2$assembly_comparison == i),]
+	df_sig3 = common2[which(common2$assembly_comparison == i),]
 	for_gsea_df = format_for_gsea(data.frame(gene_symbol = df_sig3$gene_symbol, sig = df_sig3$interaction_status))
 	for_gsea_df =unique(for_gsea_df)
 	subset_df2 = for_gsea_df$gene_ID
 	subset_df2 = as.data.frame(subset_df2)
-	write.table(subset_df2, paste0("msbb_common_",x,"_", i, "_background_5.13.24.txt"), row.names = F, sep = ",")
+	write.table(subset_df2, paste0("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/enrichment/interaction_input_msbb/msbb_common_",i, "_background_5.13.24.txt"), row.names = F, sep = ",")
 	sig_subset_df = for_gsea_df[which(for_gsea_df$DE == "Signif"),]
 	sig_subset_df2 =sig_subset_df$gene_ID
 	sig_subset_df2 = as.data.frame(sig_subset_df2)
-	write.table(sig_subset_df2, paste0("msbb_common_only_sig_",x,"_",i, "_5.13.24.txt"), row.names = F, sep = ",")
-}
+	write.table(sig_subset_df2, paste0("/sc/arion/projects/mscic1/results/anina/fun_project_4.23/enrichment/interaction_input_msbb/msbb_common_only_sig_",i, "_5.13.24.txt"), row.names = F, sep = ",")
 }
 
 
 ##run enrichment for c1
 for (x in unique(common$trait)){
 	for (i in unique(common$assembly_comparison)){
-	var1=paste0("msbb_common_only_sig_",x,"_",i, "_5.13.24.txt")
-	var2=paste0("msbb_common_",x,"_", i, "_background_5.13.24.txt")
+	var1=paste0("msbb_common_only_sig_",i, "_5.13.24.txt")
+	var2=paste0("msbb_common_",i, "_background_5.13.24.txt")
 	var3="c1.all.v2023.2.Hs.symbols.gmt" #from msigdb website C1 curated gene sets  https://www.gsea-msigdb.org/gsea/msigdb/collections.jsp
 	var4="/c1/"
 	var5=paste0(x,"_", i, "msigdb")
