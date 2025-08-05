@@ -1,4 +1,4 @@
-#Supplementary Figure 9
+#Supplementary Figure 10
 
 ## Clear the global environment
 rm(list = ls())
