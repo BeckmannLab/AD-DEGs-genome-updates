@@ -16,21 +16,16 @@ mats <- list(
 )
 
 ## Functions ------------------------------------------------------------------
-
-# Align genes and samples common to both matrices and return matched subsets
 align_pair <- function(m1, m2) {
-  g <- rownames(m1)[rownames(m1) %in% rownames(m2)]
-  s <- colnames(m1)[colnames(m1) %in% colnames(m2)]
-  list(
-    a = m1[g, s, drop = FALSE],
-    b = m2[g, s, drop = FALSE]
-  )
+  g <- rownames(m1)[rownames(m1) %in% rownames(m2)]          # genes
+  s <- colnames(m1)[colnames(m1) %in% colnames(m2)]          # samples
+  list(a = m1[g, s, drop = FALSE],
+       b = m2[g, s, drop = FALSE])
 }
 
-# Perform paired Wilcoxon tests on each gene and compile results with adjustments
 run_pair <- function(m1, m2, lbl) {
   p   <- align_pair(m1, m2)
-  tst <- perform_tests(p$a, p$b)
+  tst <- perform_tests(p$a, p$b)                 # list of htest objects
   pv  <- sapply(tst, `[[`, "p.value")
   vv  <- sapply(tst, `[[`, "statistic")
 
@@ -38,7 +33,7 @@ run_pair <- function(m1, m2, lbl) {
     Gene        = names(tst),
     P_Value     = pv,
     V_Value     = vv,
-    adj.p.value = p.adjust(pv, "bonferroni"),
+    adj.p.value = p.adjust(pv, "fdr"),
     stringsAsFactors = FALSE
   )
   out$Significant <- ifelse(out$adj.p.value <= 0.05, "Yes", "No")
@@ -46,11 +41,10 @@ run_pair <- function(m1, m2, lbl) {
   out
 }
 
-# Execute paired Wilcoxon test for each gene, returning a list of htest objects
 perform_tests <- function(mat1, mat2) {
-  stopifnot(identical(dim(mat1), dim(mat2)))
+  stopifnot(identical(dim(mat1), dim(mat2)))  # safety check
   gene_names <- rownames(mat1)
-
+  
   res <- vector("list", length(gene_names))
   for (i in seq_along(gene_names)) {
     res[[i]] <- wilcox.test(
@@ -63,12 +57,11 @@ perform_tests <- function(mat1, mat2) {
 }
 
 ## Comparison plan ------------------------------------------------------------
-
 pairs <- data.frame(
-  a1 = c("hg18","hg18","hg18","hg18",
-         "hg19","hg19","hg19",
-         "v30","v30",
-         "v43"),
+  a1    = c("hg18","hg18","hg18","hg18",
+            "hg19","hg19","hg19",
+            "v30","v30",
+            "v43"),
   a2    = c("hg19","v30","v43","T2T",
             "v30","v43","T2T",
             "v43","T2T",
@@ -77,7 +70,7 @@ pairs <- data.frame(
     "GRCh37-NCBI36",
     "GRCh38.p12-NCBI36",
     "GRCh38.p13-NCBI36",
-    "T2T-CHM13v2.0-NCBI36",
+    "CHM13v2.0-NCBI36",
     "GRCh38.p12-GRCh37",
     "GRCh38.p13-GRCh37",
     "CHM13v2.0-GRCh37",
@@ -89,27 +82,26 @@ pairs <- data.frame(
 )
 
 ## Run tests ------------------------------------------------------------------
-
 results_list <- vector("list", nrow(pairs))
+
 for (i in seq_len(nrow(pairs))) {
-  print(i)
+	print(i)
   results_list[[i]] <- run_pair(
-    mats[[pairs$a1[i]]],
-    mats[[pairs$a2[i]]],
+    mats[[ pairs$a1[i] ]],
+    mats[[ pairs$a2[i] ]],
     pairs$label[i]
   )
 }
 
 results <- do.call(rbind, results_list)
-results <- results[complete.cases(results), ]
+results <- results[complete.cases(results), ]      # drop rows with any NA
 
 ## Plot -----------------------------------------------------------------------
-
 order_vec <- c(
   "GRCh37-NCBI36",
   "GRCh38.p12-NCBI36",
   "GRCh38.p13-NCBI36",
-  "T2T-CHM13v2.0-NCBI36",
+  "CHM13v2.0-NCBI36",
   "GRCh38.p12-GRCh37",
   "GRCh38.p13-GRCh37",
   "CHM13v2.0-GRCh37",
@@ -117,18 +109,49 @@ order_vec <- c(
   "CHM13v2.0-GRCh38.p12",
   "CHM13v2.0-GRCh38.p13"
 )
+
 results$assembly <- factor(results$assembly, levels = order_vec)
+
+results_subset = results[,c("Gene", "P_Value","V_Value", "adj.p.value","assembly")]
+
+library(ggplot2)
 
 g <- ggplot(results, aes(assembly, fill = Significant)) +
   geom_bar(position = "dodge") +
-  labs(x = "Reference Comparisons", y = "Expressed Gene Count") +
+  labs(
+    x = "Nonparametric DQ",
+    y = "Expressed Gene Count"
+  ) +
   scale_fill_manual(
     values = c("red", "blue"),
-    labels = c("> 0.05", "<= 0.05"),
-    name   = "Bonferroni"
+    labels = c("> 0.05", "< 0.05"),
+    name   = "FDR"
   ) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 50, hjust = 0.8))
+  theme_minimal(base_size = 18) +
+  theme(
+    axis.text.x = element_text(
+      angle  = 45,
+      hjust  = 1,
+      vjust  = 1,
+      margin = margin(t = 10),
+      size   = 20
+    ),
+    axis.text.y     = element_text(size = 20),
+    axis.title      = element_text(size = 22),
+    legend.title    = element_text(size = 20),
+    legend.text     = element_text(size = 18),
+    # move legend to bottom
+    legend.position      = "bottom",
+    legend.justification = "center",
+    legend.background = element_rect(
+      fill  = "white",
+      color = "black",
+      size  = 0.5
+    ),
+    legend.key = element_rect(
+      fill  = NA,
+      color = NA
+    )
+  )
 
-ggsave(plot_file, g, useDingbats = FALSE)
-
+ggsave(plot_file, g, width = 9, height = 10,useDingbats = FALSE)
