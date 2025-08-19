@@ -6,7 +6,7 @@ Code for *Lund et al.* **Differentially Expressed Genes in Alzheimer’s Disease
 
 - **DE AD**: code for running differential expression for AD
 - **DQ**: code for running differential quantification for AD
-- **RAPiD**:code for running RAPiD 
+- **RAPiD**: code for running RAPiD 
 - **figures**: code for making figures  
 - **files**: files needed to run some of the analyses (noted when needed)
 - **interaction**: code for running interaction between AD and reference
