@@ -1,6 +1,6 @@
 # AD-DEGs-genome-updates
 
-Code for *Lund et al.* **Differentially Expressed Genes in Alzheimer’s Disease Vary with Updates to the Human Genome Reference**
+Code for *Lund et al.* **Updates to the reference genome alter the detection and direction of genes differentially expressed in Alzheimer’s disease**
 
 ## Folders
 
